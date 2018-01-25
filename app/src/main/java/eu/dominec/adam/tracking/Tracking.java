@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -16,11 +17,18 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgproc.Imgproc;
 
 public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
+    private Point[] mPoints = new Point[0];
+    private Mat mFrame;
+    private MatOfPoint2f mPointMat;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +52,22 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
                 }
             }
         });
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MatOfKeyPoint points = new MatOfKeyPoint();
+                FeatureDetector detector = FeatureDetector.create(FeatureDetector.HARRIS);
+                detector.detect(mFrame, points);
+                KeyPoint[] inarr = points.toArray();
+                mPoints = new Point[inarr.length];
+                for (int i = 0; i < inarr.length; ++i) {
+                    mPoints[i] = inarr[i].pt;
+                }
+                mPointMat = new MatOfPoint2f();
+                mPointMat.fromArray(mPoints);
+            }
+        });
+
     }
 
     @Override
@@ -56,14 +80,11 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat result = inputFrame.rgba();
-        FeatureDetector detector = FeatureDetector.create(FeatureDetector.HARRIS);
-        MatOfKeyPoint points = new MatOfKeyPoint();
-        detector.detect(result, points);
-        KeyPoint[] arr = points.toArray();
-        for (KeyPoint kp : arr) {
-            Imgproc.circle(result, kp.pt, 3, new Scalar(0, 0, 255));
+        mFrame = inputFrame.rgba();
+
+        for (Point p : mPoints) {
+            Imgproc.circle(mFrame, p, 3, new Scalar(0, 0, 255));
         }
-        return result;
+        return mFrame;
     }
 }
