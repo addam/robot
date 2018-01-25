@@ -13,7 +13,12 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Scalar;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.imgproc.Imgproc;
 
 public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
     @Override
@@ -51,6 +56,14 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        return inputFrame.rgba();
+        Mat result = inputFrame.rgba();
+        FeatureDetector detector = FeatureDetector.create(FeatureDetector.HARRIS);
+        MatOfKeyPoint points = new MatOfKeyPoint();
+        detector.detect(result, points);
+        KeyPoint[] arr = points.toArray();
+        for (KeyPoint kp : arr) {
+            Imgproc.circle(result, kp.pt, 3, new Scalar(0, 0, 255));
+        }
+        return result;
     }
 }
