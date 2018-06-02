@@ -59,6 +59,17 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
     Size size;
 
     @Override
+    public void onBackPressed() {
+        if (!warpedPoints.empty()) {
+            warpedPoints = new MatOfPoint2f();
+        } else if (homography.dot(homography) != 3){
+            homography = Mat.eye(3, 3, CV_64F);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
