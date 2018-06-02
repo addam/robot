@@ -39,21 +39,24 @@ import java.util.List;
 import static org.opencv.calib3d.Calib3d.SOLVEPNP_AP3P;
 import static org.opencv.calib3d.Calib3d.SOLVEPNP_P3P;
 import static org.opencv.calib3d.Calib3d.solvePnP;
+import static org.opencv.core.Core.FILLED;
 import static org.opencv.core.CvType.CV_32F;
 import static org.opencv.core.CvType.CV_32FC1;
 import static org.opencv.core.CvType.CV_64F;
+import static org.opencv.core.CvType.CV_8UC;
+import static org.opencv.core.CvType.CV_8UC3;
+import static org.opencv.core.CvType.CV_8UC4;
 import static org.opencv.utils.Converters.Mat_to_vector_double;
 import static org.opencv.utils.Converters.vector_Point2f_to_Mat;
 import static org.opencv.utils.Converters.vector_Point3f_to_Mat;
 
 public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
-    private Mat mFrame;
-    private MatOfPoint2f warpedPoints;
-    private MatOfPoint3f objectPoints;
-    private MatOfPoint2f keyPoints;
-    private Mat baseFrame;
-    private Mat homography;
     private MatOfPoint2f basePoints;
+    private MatOfPoint2f warpedPoints;
+    private Mat homography;
+    Grid grid = new Grid(40);
+    Mat baseFrame;
+    Size size;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,10 +77,9 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
             public void onManagerConnected(int status) {
                 if (status == LoaderCallbackInterface.SUCCESS) {
                     view.enableView();
-                    mFrame = new Mat();
-                    baseFrame = new Mat();
+                    baseFrame = grid.image();
                     homography = Mat.eye(3, 3, CV_64F);
-                    basePoints = new MatOfPoint2f();
+                    basePoints = grid.points();
                     warpedPoints = new MatOfPoint2f();
                 } else {
                     super.onManagerConnected(status);
@@ -87,19 +89,7 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                baseFrame = mFrame.clone();
-                MatOfKeyPoint points = new MatOfKeyPoint();
-                FeatureDetector detector = FeatureDetector.create(FeatureDetector.HARRIS);
-                Imgproc.medianBlur(mFrame, mFrame, 9);
-                detector.detect(mFrame, points);
-                KeyPoint[] inarr = points.toArray();
-                Point[] tmp_array = new Point[inarr.length];
-                for (int i = 0; i < inarr.length; ++i) {
-                    tmp_array[i] = inarr[i].pt;
-                }
-                basePoints.fromArray(tmp_array);
-                warpedPoints.fromArray(tmp_array);
-                Log.i("onClick", "got " + basePoints.rows() + " points");
+                Core.perspectiveTransform(basePoints, warpedPoints, homography);
             }
         });
 
@@ -116,74 +106,127 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Mat newFrame = inputFrame.rgba();
-        mFrame = newFrame;
-        if (!mFrame.empty() && !basePoints.empty()) {
-            Mat warpedFrame = new Mat();
-            Imgproc.warpPerspective(baseFrame, warpedFrame, homography, newFrame.size());
+        size = newFrame.size();
+        Mat warpedFrame = new Mat();
+        Imgproc.warpPerspective(baseFrame, warpedFrame, homography, size);
+        if (!newFrame.empty() && warpedPoints.rows() >= 4) {
             MatOfPoint2f resultPoints = trackPoints(warpedPoints, warpedFrame, newFrame);
-            if (resultPoints.empty()) {
-                basePoints.fromArray(new Point[]{});
-                return mFrame;
+            Log.d("resultPoints", resultPoints.rows() + "x" + resultPoints.cols());
+            Log.d("warpedPoints", warpedPoints.rows() + "x" + warpedPoints.cols());
+            if (resultPoints.rows() < 4) {
+                warpedPoints = new MatOfPoint2f();
+                return newFrame;
             }
-            keyPoints = new MatOfPoint2f(vector_Point2f_to_Mat(resultPoints.toList().subList(0, 4)));
-            List<Point3> tmpPoints = new ArrayList<>();
-            for (Point p : keyPoints.toArray()) {
-                tmpPoints.add(new Point3(p.x, p.y, 0));
-            }
-            objectPoints = new MatOfPoint3f(vector_Point3f_to_Mat(tmpPoints));
-            List<Double> params = new ArrayList<>();
-            Mat_to_vector_double(trackPose(), params);
             Mat newHomography = Calib3d.findHomography(warpedPoints, resultPoints, Calib3d.RANSAC, 10);
-            Log.i("onCameraFrame", "newHomography is " + newHomography.rows() + "x" + newHomography.cols() + " of type " + newHomography.type() + ", homography has type " + homography.type());
+            if (newHomography.rows() != 3 || newHomography.cols() != 3) {
+                return newFrame;
+            }
             Core.gemm(newHomography, homography, 1, homography, 0, homography);
-            Imgproc.warpPerspective(baseFrame, newFrame, homography, baseFrame.size());
+            Log.d("homography", homography.dump());
+            Imgproc.warpPerspective(baseFrame, newFrame, homography, size);
             Core.perspectiveTransform(basePoints, warpedPoints, homography);
             Point[] points = warpedPoints.toArray();
             for (Point p : points) {
                 Imgproc.circle(newFrame, p, 3, new Scalar(0, 0, 255), -1);
             }
+            List<Double> params = new ArrayList<>();
+            Mat_to_vector_double(trackPose(), params);
             Imgproc.putText(newFrame, String.format("translation: %.2f %.2f %.2f", params.get(0), params.get(1), params.get(2)), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
             Imgproc.putText(newFrame, String.format("rotation: %.2f %.2f %.2f", params.get(3), params.get(4), params.get(5)), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));
             return newFrame;
         } else {
-            return mFrame;
+            Core.addWeighted(warpedFrame, 0.3, newFrame, 0.7, 0, newFrame);
+            return newFrame;
         }
-
     }
 
     public Mat trackPose() {
-        double focal_length = mFrame.cols(); // Approximate focal length.
-        Point center = new Point(mFrame.cols()/2,mFrame.rows()/2);
-        Mat camera_matrix = new Mat(3, 3, CV_32F);
-        camera_matrix.put(0, 0, focal_length, 0, center.x, 0 , focal_length, center.y, 0, 0, 1);
-        MatOfDouble dist_coeffs = new MatOfDouble(new Mat(4,1, CV_64F)); // Assuming no lens distortion
-        dist_coeffs.setTo(new Scalar(0));
-        Mat rotation_vector = new Mat(); // Rotation in axis-angle form
-        Mat translation_vector = new Mat();
-        solvePnP(objectPoints, keyPoints, camera_matrix, dist_coeffs, rotation_vector, translation_vector, false, SOLVEPNP_P3P);
-        translation_vector.push_back(rotation_vector);
-        return translation_vector;
+        double focal_length = size.width;
+        Mat cameraMatrix = new Mat(3, 3, CV_32F);
+        cameraMatrix.put(0, 0, focal_length, 0, size.width / 2, 0, focal_length, size.height / 2, 0, 0, 1);
+        Mat rotation = new Mat(), translation = new Mat();
+        MatOfPoint2f keyPoints = new MatOfPoint2f(vector_Point2f_to_Mat(grid.keyPoints()));
+        Core.perspectiveTransform(keyPoints, keyPoints, homography);
+        solvePnP(grid.objectPoints(), keyPoints, cameraMatrix, new MatOfDouble(), rotation, translation);
+        translation.push_back(rotation);
+        return translation;
     }
 
     public static MatOfPoint2f trackPoints(MatOfPoint2f leftPoints, Mat leftImg, Mat rightImg) {
         MatOfPoint2f result = new MatOfPoint2f();
         MatOfByte status = new MatOfByte();
         MatOfFloat pointError = new MatOfFloat();
-        Video.calcOpticalFlowPyrLK(leftImg, rightImg, leftPoints, result, status, pointError, new Size(20, 20), 5);
+        Video.calcOpticalFlowPyrLK(leftImg, rightImg, leftPoints, result, status, pointError, new Size(31, 31), 5);
         Point[] leftArray = leftPoints.toArray();
         Point[] rightArray = result.toArray();
         ArrayList<Point> goodLeftPoints = new ArrayList<Point>();
         ArrayList<Point> goodRightPoints = new ArrayList<Point>();
         for (int i = 0; i < status.rows() && i < pointError.rows(); ++i) {
-            if (status.get(i, 0)[0] == 1 && pointError.get(i, 0)[0] < 100) {
+            if (status.get(i, 0)[0] == 1) {// && pointError.get(i, 0)[0] < 100) {
                 goodLeftPoints.add(leftArray[i]);
                 goodRightPoints.add(rightArray[i]);
             }
         }
         Log.d("trackPoints", goodLeftPoints.size() + " good points out of " + leftPoints.rows());
-        leftPoints.fromList(goodLeftPoints);
-        result.fromList(goodRightPoints);
+        if (goodLeftPoints.isEmpty()) {
+            new MatOfPoint2f().copyTo(leftPoints);
+            leftPoints.copyTo(result);
+        } else {
+            leftPoints.fromList(goodLeftPoints);
+            result.fromList(goodRightPoints);
+        }
+        return result;
+    }
+}
+
+class Grid {
+    int count = 7;
+    int size;
+    int width;
+
+    Grid(int _size) {
+        size = _size;
+        width = size * 15 / 200;
+    }
+
+    Mat image() {
+        Mat result = new Mat((count + 2) * size, (count + 2) * size, CV_8UC4);
+        result.setTo(new Scalar(255, 255, 255));
+        for (int i = 1; i <= count; ++i) {
+            Imgproc.rectangle(result, new Point(i * size, size), new Point(i * size + width, count * size), new Scalar(0, 0, 0), FILLED);
+            Imgproc.rectangle(result, new Point(size, i * size), new Point(count * size, i * size + width), new Scalar(0, 0, 0), FILLED);
+        }
         return result;
     }
 
+    List<Point> keyPoints() {
+        List<Point> result = new ArrayList<>();
+        result.add(new Point(size, size));
+        result.add(new Point(count * size + width, size));
+        result.add(new Point(size, count * size + width));
+        result.add(new Point(count * size + width, count * size + width));
+        return result;
+    }
+
+    MatOfPoint2f points() {
+        List<Point> result = keyPoints();
+        for (int i = 1; i <= count; ++i) {
+            for (int j = 1; j <= count; ++j) {
+                if (i > 0) result.add(new Point(i * size, j * size));
+                if (i < count) result.add(new Point(i * size + width, j * size));
+                if (j > 0) result.add(new Point(i * size + width, j * size + width));
+                if (j < count) result.add(new Point(i * size, j * size + width));
+            }
+        }
+        return new MatOfPoint2f(vector_Point2f_to_Mat(result));
+    }
+
+    MatOfPoint3f objectPoints() {
+        List<Point3> result = new ArrayList<>();
+        result.add(new Point3(size, size, 0));
+        result.add(new Point3(count * size + width, size, 0));
+        result.add(new Point3(size, count * size + width, 0));
+        result.add(new Point3(count * size + width, count * size + width, 0));
+        return new MatOfPoint3f(vector_Point3f_to_Mat(result));
+    }
 }
