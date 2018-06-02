@@ -56,17 +56,23 @@ import static org.opencv.utils.Converters.vector_Point3f_to_Mat;
 public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private MatOfPoint2f basePoints;
     private MatOfPoint2f warpedPoints;
+    boolean isTracking;
     private Mat homography;
-    Grid grid = new Grid(40);
+    Grid grid = new Grid(200);
     Mat baseFrame;
     Size size;
 
+    void reset() {
+        homography = Mat.eye(3, 3, CV_64F);
+        warpedPoints = new MatOfPoint2f();
+        Core.perspectiveTransform(basePoints, warpedPoints, homography);
+    }
     @Override
     public void onBackPressed() {
-        if (!warpedPoints.empty()) {
-            warpedPoints = new MatOfPoint2f();
+        if (isTracking) {
+            isTracking = false;
         } else if (homography.dot(homography) != 3){
-            homography = Mat.eye(3, 3, CV_64F);
+            reset();
         } else {
             super.onBackPressed();
         }
@@ -89,16 +95,14 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         setContentView(view);
         view.setVisibility(SurfaceView.VISIBLE);
         view.setCvCameraViewListener(this);
-        Log.i("start", "start");
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, new BaseLoaderCallback(this) {
             @Override
             public void onManagerConnected(int status) {
                 if (status == LoaderCallbackInterface.SUCCESS) {
                     view.enableView();
                     baseFrame = grid.image();
-                    homography = Mat.eye(3, 3, CV_64F);
                     basePoints = grid.points();
-                    warpedPoints = new MatOfPoint2f();
+                    reset();
                 } else {
                     super.onManagerConnected(status);
                 }
@@ -107,14 +111,14 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Core.perspectiveTransform(basePoints, warpedPoints, homography);
+                isTracking = true;
             }
         });
-
     }
 
     @Override
     public void onCameraViewStarted(int width, int height) {
+        size = new Size(width, height);
     }
 
     @Override
@@ -124,38 +128,42 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Mat newFrame = inputFrame.rgba();
-        size = newFrame.size();
         Mat warpedFrame = new Mat();
         Imgproc.warpPerspective(baseFrame, warpedFrame, homography, size);
-        if (!newFrame.empty() && warpedPoints.rows() >= 4) {
-            MatOfPoint2f resultPoints = trackPoints(warpedPoints, warpedFrame, newFrame);
-            Log.d("resultPoints", resultPoints.rows() + "x" + resultPoints.cols());
-            Log.d("warpedPoints", warpedPoints.rows() + "x" + warpedPoints.cols());
-            if (resultPoints.rows() < 4) {
-                warpedPoints = new MatOfPoint2f();
-                return newFrame;
-            }
-            Mat newHomography = Calib3d.findHomography(warpedPoints, resultPoints, Calib3d.RANSAC, 10);
-            if (newHomography.rows() != 3 || newHomography.cols() != 3) {
-                return newFrame;
-            }
-            Core.gemm(newHomography, homography, 1, homography, 0, homography);
-            Log.d("homography", homography.dump());
-            Imgproc.warpPerspective(baseFrame, newFrame, homography, size);
-            Core.perspectiveTransform(basePoints, warpedPoints, homography);
-            Point[] points = warpedPoints.toArray();
-            for (Point p : points) {
-                Imgproc.circle(newFrame, p, 3, new Scalar(0, 0, 255), -1);
-            }
+        if (isTracking && trackHomography(warpedFrame, newFrame)) {
             List<Double> params = new ArrayList<>();
             Mat_to_vector_double(trackPose(), params);
             Imgproc.putText(newFrame, String.format("translation: %.2f %.2f %.2f", params.get(0), params.get(1), params.get(2)), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
             Imgproc.putText(newFrame, String.format("rotation: %.2f %.2f %.2f", params.get(3), params.get(4), params.get(5)), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));
-            return newFrame;
         } else {
             Core.addWeighted(warpedFrame, 0.3, newFrame, 0.7, 0, newFrame);
-            return newFrame;
+            Imgproc.putText(newFrame, String.format("%d warped points", warpedPoints.rows()), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
+            isTracking = false;
         }
+        for (Point p : warpedPoints.toArray()) {
+            Imgproc.circle(newFrame, p, 2, new Scalar(0, isTracking ? 255:0, isTracking ? 0:255), -1);
+        }
+        return newFrame;
+    }
+
+    boolean trackHomography(Mat warpedFrame, Mat newFrame) {
+//        Core.perspectiveTransform(basePoints, warpedPoints, homography);
+        MatOfPoint2f resultPoints = trackPoints(warpedPoints, warpedFrame, newFrame);
+        if (resultPoints.rows() < 4) {
+            Core.perspectiveTransform(basePoints, warpedPoints, homography);
+            Log.d("trackHomography", resultPoints.rows() + " result points, stop.");
+            return false;
+        }
+        Mat newHomography = Calib3d.findHomography(warpedPoints, resultPoints, Calib3d.RANSAC, 10);
+        if (newHomography.rows() != 3 || newHomography.cols() != 3) {
+            Core.perspectiveTransform(basePoints, warpedPoints, homography);
+            Log.d("trackHomography", homography.rows() + " homography rows, stop.");
+            return false;
+        }
+        Core.gemm(newHomography, homography, 1, homography, 0, homography);
+        Core.perspectiveTransform(basePoints, warpedPoints, homography);
+        Log.d("trackHomography", basePoints.rows() + " base points, " + warpedPoints.rows() + " warped points");
+        return true;
     }
 
     public Mat trackPose() {
@@ -208,7 +216,7 @@ class Grid {
     }
 
     Mat image() {
-        Mat result = new Mat((count + 2) * size, (count + 2) * size, CV_8UC4);
+        Mat result = new Mat((count + 1) * size + width, (count + 1) * size + width, CV_8UC4);
         result.setTo(new Scalar(255, 255, 255));
         for (int i = 1; i <= count; ++i) {
             Imgproc.rectangle(result, new Point(i * size, size), new Point(i * size + width, count * size), new Scalar(0, 0, 0), FILLED);
@@ -227,13 +235,10 @@ class Grid {
     }
 
     MatOfPoint2f points() {
-        List<Point> result = keyPoints();
+        List<Point> result = new ArrayList<>();
         for (int i = 1; i <= count; ++i) {
             for (int j = 1; j <= count; ++j) {
-                if (i > 0) result.add(new Point(i * size, j * size));
-                if (i < count) result.add(new Point(i * size + width, j * size));
-                if (j > 0) result.add(new Point(i * size + width, j * size + width));
-                if (j < count) result.add(new Point(i * size, j * size + width));
+                result.add(new Point(i * size + width / 2, j * size + width / 2));
             }
         }
         return new MatOfPoint2f(vector_Point2f_to_Mat(result));
