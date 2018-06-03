@@ -110,7 +110,7 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
             }
         }
         final JavaCameraView view = new JavaCameraView(this.getApplicationContext(), 0);
-        view.setLayoutParams(new WindowManager.LayoutParams(WindowManager.LayoutParams.FILL_PARENT, WindowManager.LayoutParams.WRAP_CONTENT));
+        view.setLayoutParams(new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT));
         setContentView(view);
         view.setVisibility(SurfaceView.VISIBLE);
         view.setCvCameraViewListener(this);
@@ -124,12 +124,7 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
                 }
             }
         });
-        view.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                isTracking = true;
-            }
-        });
+        view.setOnClickListener(view1 -> isTracking = true);
     }
 
     @Override
@@ -155,7 +150,6 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         Mat warpedFrame = new Mat();
         Imgproc.warpPerspective(baseFrame, warpedFrame, homography, size);
         if (isTracking && trackHomography(warpedFrame, newFrame)) {
-            newFrame = warpedFrame;
             List<Double> params = trackPose();
             Imgproc.putText(newFrame, String.format("translation: %.2f %.2f %.2f", params.get(0), params.get(1), params.get(2)), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
             Imgproc.putText(newFrame, String.format("rotation: %.2f %.2f %.2f", params.get(3), params.get(4), params.get(5)), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));
