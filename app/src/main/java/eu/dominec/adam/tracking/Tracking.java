@@ -87,11 +87,10 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         for (int i = 0; i<points.size(); ++i) {
             if (screen.contains(points.get(i))) {
                 if (write != i) {
-                    points.set(write++, points.get(i));
-                    bp.set(write++, bp.get(i));
-                } else {
-                    ++write;
+                    points.set(write, points.get(i));
+                    bp.set(write, bp.get(i));
                 }
+                ++write;
             }
         }
         warpedPoints.fromList(points.subList(0, write));
@@ -219,11 +218,10 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         for (int i = 0; i < status.rows(); ++i) {
             if (status.get(i, 0)[0] == 1) {
                 if (write != i) {
-                    lp.set(write++, lp.get(i));
-                    rp.set(write++, rp.get(i));
-                } else {
-                    ++write;
+                    lp.set(write, lp.get(i));
+                    rp.set(write, rp.get(i));
                 }
+                ++write;
             }
         }
         Log.d("trackPoints", write + " good points out of " + leftPoints.rows());
