@@ -80,7 +80,7 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
 
     void projectPoints() {
         Rect screen = new Rect(new Point(0, 0), size);
-        Core.perspectiveTransform(basePoints, warpedPoints, homography);
+        Core.perspectiveTransform(grid.points(), warpedPoints, homography);
         List<Point> points = warpedPoints.toList();
         List<Point> bp = grid.points().toList();
         int write = 0;
@@ -172,7 +172,6 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         MatOfPoint2f resultPoints = trackPoints(warpedPoints, warpedFrame, newFrame);
         if (resultPoints.rows() < 4) {
             projectPoints();
-            Log.d("trackHomography", resultPoints.rows() + " result points, stop.");
             return false;
         }
         Mat newHomography = Calib3d.findHomography(warpedPoints, resultPoints, Calib3d.RANSAC, 10);
@@ -205,7 +204,7 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         MatOfPoint2f rightPoints = new MatOfPoint2f();
         MatOfByte status = new MatOfByte();
         MatOfFloat pointError = new MatOfFloat();
-        Video.calcOpticalFlowPyrLK(leftImg, rightImg, leftPoints, rightPoints, status, pointError, new Size(15, 15), 5);
+        Video.calcOpticalFlowPyrLK(leftImg, rightImg, leftPoints, rightPoints, status, pointError, new Size(5, 5), 3);
         List<Point> lp = leftPoints.toList();
         List<Point> rp = rightPoints.toList();
         int write = 0;
@@ -263,7 +262,10 @@ class Grid {
         List<Point> result = new ArrayList<>();
         for (int i = 1; i <= count; ++i) {
             for (int j = 1; j <= count; ++j) {
-                result.add(new Point(i * size + width / 2, j * size + width / 2));
+                if (i > 0) result.add(new Point(i * size, j * size));
+                if (i < count) result.add(new Point(i * size + width, j * size));
+                if (j > 0) result.add(new Point(i * size + width, j * size + width));
+                if (j < count) result.add(new Point(i * size, j * size + width));
             }
         }
         return new MatOfPoint2f(vector_Point2f_to_Mat(result));
