@@ -152,7 +152,7 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         if (isTracking && trackHomography(warpedFrame, newFrame)) {
             List<Double> params = trackPose();
             Imgproc.putText(newFrame, String.format("translation: %.2f %.2f %.2f", params.get(0), params.get(1), params.get(2)), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
-            Imgproc.putText(newFrame, String.format("rotation: %.2f %.2f %.2f", params.get(3), params.get(4), params.get(5)), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));
+            Imgproc.putText(newFrame, String.format("rotation: %.1f %.1f %.1f", params.get(3)*180/Math.PI, params.get(4)*180/Math.PI, params.get(5)*180/Math.PI), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));
         } else {
             Core.addWeighted(warpedFrame, 0.3, newFrame, 0.7, 0, newFrame);
             Imgproc.putText(newFrame, String.format("%d warped points", warpedPoints.rows()), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
@@ -180,7 +180,7 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
             Log.d("trackHomography", newHomography.rows() + " homography rows, stop.");
             return false;
         }
-        Core.gemm(newHomography, homography, 1, homography, 0, homography);
+        Core.gemm(newHomography, homography, 1, new Mat(), 0, homography);
         projectPoints();
         Log.d("trackHomography", basePoints.rows() + " base points, " + warpedPoints.rows() + " warped points");
         return true;
@@ -190,13 +190,15 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         double focal_length = size.width;
         Mat cameraMatrix = new Mat(3, 3, CV_32F);
         cameraMatrix.put(0, 0, focal_length, 0, size.width / 2, 0, focal_length, size.height / 2, 0, 0, 1);
-        Mat rotation = new Mat(), translation = new Mat();
+        Mat vrot = new Mat(), vtrans = new Mat();
         MatOfPoint2f keyPoints = new MatOfPoint2f(vector_Point2f_to_Mat(grid.keyPoints()));
         projectPoints();
-        solvePnP(grid.objectPoints(), keyPoints, cameraMatrix, new MatOfDouble(), rotation, translation);
         translation.push_back(rotation);
+        Core.perspectiveTransform(keyPoints, keyPoints, homography);
+        solvePnP(grid.objectPoints(), keyPoints, cameraMatrix, new MatOfDouble(), vrot, vtrans);
+        vtrans.push_back(vrot);
         List<Double> result = new ArrayList<>();
-        Mat_to_vector_double(translation, result);
+        Mat_to_vector_double(vtrans, result);
         return result;
     }
 
@@ -259,13 +261,14 @@ class Grid {
     }
 
     MatOfPoint2f points() {
-        List<Point> result = new ArrayList<>();
-        for (int i = 1; i <= count; ++i) {
-            for (int j = 1; j <= count; ++j) {
-                if (i > 0) result.add(new Point(i * size, j * size));
-                if (i < count) result.add(new Point(i * size + width, j * size));
-                if (j > 0) result.add(new Point(i * size + width, j * size + width));
-                if (j < count) result.add(new Point(i * size, j * size + width));
+        List<Point> result = keyPoints();
+        int n = count;
+        for (int i = 1; i <= n; ++i) {
+            for (int j = 1; j <= n; ++j) {
+                if (i > 1 && j > 1) result.add(new Point(i * size, j * size));
+                if (i < n && j > 1) result.add(new Point(i * size + width, j * size));
+                if (i > 1 && j < n) result.add(new Point(i * size, j * size + width));
+                if (i < n && j < n) result.add(new Point(i * size + width, j * size + width));
             }
         }
         return new MatOfPoint2f(vector_Point2f_to_Mat(result));
