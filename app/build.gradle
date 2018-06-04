@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 26
     defaultConfig {
-        applicationId "eu.dominec.adam.tracking"
+        applicationId "cz.gymjs.robot"
         minSdkVersion 16
         targetSdkVersion 26
         versionCode 1
