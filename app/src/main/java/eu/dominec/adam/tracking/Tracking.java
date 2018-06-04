@@ -8,7 +8,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -19,13 +18,10 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
-import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfFloat;
-import org.opencv.core.MatOfKeyPoint;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.MatOfPoint3f;
 import org.opencv.core.Point;
@@ -33,30 +29,22 @@ import org.opencv.core.Point3;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.video.Video;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.opencv.calib3d.Calib3d.SOLVEPNP_AP3P;
-import static org.opencv.calib3d.Calib3d.SOLVEPNP_P3P;
 import static org.opencv.calib3d.Calib3d.solvePnP;
 import static org.opencv.core.Core.FILLED;
 import static org.opencv.core.CvType.CV_32F;
-import static org.opencv.core.CvType.CV_32FC1;
 import static org.opencv.core.CvType.CV_64F;
-import static org.opencv.core.CvType.CV_8UC;
-import static org.opencv.core.CvType.CV_8UC3;
 import static org.opencv.core.CvType.CV_8UC4;
 import static org.opencv.utils.Converters.Mat_to_vector_double;
 import static org.opencv.utils.Converters.vector_Point2f_to_Mat;
 import static org.opencv.utils.Converters.vector_Point3f_to_Mat;
 
 public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
-    private MatOfPoint2f basePoints;
-    private MatOfPoint2f warpedPoints;
     boolean isTracking;
     private Mat homography;
     Grid grid;
@@ -65,8 +53,8 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
 
     void reset() {
         homography = Mat.eye(3, 3, CV_64F);
-        warpedPoints = new MatOfPoint2f();
     }
+
     @Override
     public void onBackPressed() {
         if (isTracking) {
@@ -78,23 +66,22 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         }
     }
 
-    void projectPoints() {
+    MatOfPoint2f projectPoints() {
         Rect screen = new Rect(new Point(0, 0), size);
-        Core.perspectiveTransform(grid.points(), warpedPoints, homography);
-        List<Point> points = warpedPoints.toList();
-        List<Point> bp = grid.points().toList();
+        MatOfPoint2f result = new MatOfPoint2f();
+        Core.perspectiveTransform(grid.points(), result, homography);
+        List<Point> points = result.toList();
         int write = 0;
         for (int i = 0; i<points.size(); ++i) {
             if (screen.contains(points.get(i))) {
                 if (write != i) {
                     points.set(write, points.get(i));
-                    bp.set(write, bp.get(i));
                 }
                 ++write;
             }
         }
-        warpedPoints.fromList(points.subList(0, write));
-        basePoints.fromList(bp.subList(0, write));
+        result.fromList(points.subList(0, write));
+        return result;
     }
 
     @Override
@@ -132,7 +119,6 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         origSize = new Size(width, height);
         grid = new Grid(40);
         baseFrame = grid.image();
-        basePoints = grid.points();
         reset();
     }
 
@@ -155,10 +141,9 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
             Imgproc.putText(newFrame, String.format("rotation: %.1f %.1f %.1f", params.get(3)*180/Math.PI, params.get(4)*180/Math.PI, params.get(5)*180/Math.PI), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));
         } else {
             Core.addWeighted(warpedFrame, 0.3, newFrame, 0.7, 0, newFrame);
-            Imgproc.putText(newFrame, String.format("%d warped points", warpedPoints.rows()), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
             isTracking = false;
         }
-        for (Point p : warpedPoints.toArray()) {
+        for (Point p : projectPoints().toArray()) {
             Imgproc.circle(newFrame, p, 2, new Scalar(0, isTracking ? 255:0, isTracking ? 0:255), -1);
         }
         if (size.width != origSize.width) {
@@ -168,21 +153,16 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
     }
 
     boolean trackHomography(Mat warpedFrame, Mat newFrame) {
-        projectPoints();
+        MatOfPoint2f warpedPoints = projectPoints();
         MatOfPoint2f resultPoints = trackPoints(warpedPoints, warpedFrame, newFrame);
         if (resultPoints.rows() < 4) {
-            projectPoints();
             return false;
         }
-        Mat newHomography = Calib3d.findHomography(warpedPoints, resultPoints, Calib3d.RANSAC, 10);
-        if (newHomography.rows() != 3 || newHomography.cols() != 3) {
-            projectPoints();
-            Log.d("trackHomography", newHomography.rows() + " homography rows, stop.");
+        Mat diff = Calib3d.findHomography(warpedPoints, resultPoints, Calib3d.RANSAC, 10);
+        if (diff.empty()) {
             return false;
         }
-        Core.gemm(newHomography, homography, 1, new Mat(), 0, homography);
-        projectPoints();
-        Log.d("trackHomography", basePoints.rows() + " base points, " + warpedPoints.rows() + " warped points");
+        Core.gemm(diff, homography, 1, new Mat(), 0, homography);
         return true;
     }
 
@@ -192,8 +172,6 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         cameraMatrix.put(0, 0, focal_length, 0, size.width / 2, 0, focal_length, size.height / 2, 0, 0, 1);
         Mat vrot = new Mat(), vtrans = new Mat();
         MatOfPoint2f keyPoints = new MatOfPoint2f(vector_Point2f_to_Mat(grid.keyPoints()));
-        projectPoints();
-        translation.push_back(rotation);
         Core.perspectiveTransform(keyPoints, keyPoints, homography);
         solvePnP(grid.objectPoints(), keyPoints, cameraMatrix, new MatOfDouble(), vrot, vtrans);
         vtrans.push_back(vrot);
@@ -206,7 +184,7 @@ public class Tracking extends Activity implements CameraBridgeViewBase.CvCameraV
         MatOfPoint2f rightPoints = new MatOfPoint2f();
         MatOfByte status = new MatOfByte();
         MatOfFloat pointError = new MatOfFloat();
-        Video.calcOpticalFlowPyrLK(leftImg, rightImg, leftPoints, rightPoints, status, pointError, new Size(5, 5), 3);
+        Video.calcOpticalFlowPyrLK(leftImg, rightImg, leftPoints, rightPoints, status, pointError, new Size(5, 5), 2);
         List<Point> lp = leftPoints.toList();
         List<Point> rp = rightPoints.toList();
         int write = 0;
