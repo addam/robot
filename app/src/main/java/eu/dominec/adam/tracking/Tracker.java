@@ -31,7 +31,9 @@ import static org.opencv.utils.Converters.vector_Point2f_to_Mat;
 import static org.opencv.utils.Converters.vector_Point3f_to_Mat;
 
 public class Tracker {
+    float smoothing = 1; // smooth out noise from the pose calculation
     private Mat homography;
+    private Mat prevDiff;
     private Grid grid = new Grid(40);
     Size size;
 
@@ -77,6 +79,14 @@ public class Tracker {
         Mat diff = Calib3d.findHomography(leftPoints, rightPoints, Calib3d.RANSAC, 10);
         if (diff.empty()) {
             return false;
+        }
+        if (prevDiff != null) {
+            double prod = diff.dot(prevDiff) / Core.norm(prevDiff, Core.NORM_L2SQR);
+            double coef = Math.exp(-smoothing * Math.abs(prod - 1));
+            prevDiff = diff.clone();
+            Core.addWeighted(diff, coef, Mat.eye(3, 3, CV_64F), 1-coef, 0, diff);
+        } else {
+            prevDiff = diff;
         }
         Core.gemm(diff, homography, 1, new Mat(), 0, homography);
         return true;
