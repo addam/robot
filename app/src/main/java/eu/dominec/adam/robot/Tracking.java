@@ -1,4 +1,4 @@
-package eu.dominec.adam.tracking;
+package eu.dominec.adam.robot;
 
 import android.Manifest;
 import android.app.Activity;

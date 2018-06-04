@@ -1,4 +1,4 @@
-package eu.dominec.adam.tracking;
+package eu.dominec.adam.robot;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
