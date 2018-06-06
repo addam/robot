@@ -20,10 +20,22 @@ import java.io.IOException;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
-    MotorController motors;
-    boolean isTracking;
-    Size origSize;
     Tracker tracker;
+    Game game;
+    Size origSize;
+    boolean isTracking;
+    boolean isPlaying;
+
+    @Override
+    public void onBackPressed() {
+        if (isPlaying) {
+            isPlaying = false;
+        } else if (isTracking) {
+            isTracking = false;
+        } else if (!tracker.reset()) {
+            super.onBackPressed();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,80 +64,23 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 }
             }
         });
-        view.setOnClickListener(view1 -> isTracking = true);
 
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        final SeekBar sbl = findViewById(R.id.seekBar);
-        final SeekBar sbr = findViewById(R.id.seekBar2);
-        sbl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+        view.setOnClickListener(view1 -> {
+            if (isTracking) {
+                UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
                 try {
-                    motors.rotate(i - sbl.getMax() / 2, sbr.getProgress() - sbr.getMax() / 2);
+                    MotorController motors = new MotorController(manager);
+                    game = new Game(motors);
+                    isPlaying = true;
                 } catch (IOException e) {
-                    Log.d("onProgressChanged", "Communication failed: " + e.getLocalizedMessage());
+                    Log.d("onCreate", "Initialization failed: " + e.getLocalizedMessage());
                 }
+            } else {
+                isTracking = true;
             }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
-        sbr.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                try {
-                    motors.rotate(sbl.getProgress() - sbl.getMax() / 2, i - sbr.getMax() / 2);
-                } catch (IOException e) {
-                    Log.d("onProgressChanged", "Communication failed: " + e.getLocalizedMessage());
-                }
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-        try {
-            motors = new MotorController(manager);
-        } catch (IOException e) {
-            Log.d("onCreate", "Initialization failed: " + e.getLocalizedMessage());
-            super.onBackPressed();
-        }
     }
 
-    @Override
-    public void onBackPressed() {
-        if (isTracking) {
-            isTracking = false;
-        } else if (!tracker.reset()) {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
     @Override
     public void onCameraViewStarted(int width, int height) {
         origSize = new Size(width, height);
@@ -145,6 +100,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Mat predictedFrame = tracker.warpedGrid();
         if (isTracking && tracker.updateHomography(predictedFrame, frame)) {
             List<Double> params = tracker.pose();
+            if (isPlaying) {
+                game.robot.x = params.get(0);
+                game.robot.y = params.get(1);
+                game.rotation = params.get(3);
+                game.gameOn();
+            }
             Imgproc.putText(frame, String.format("translation: %.2f %.2f %.2f", params.get(0), params.get(1), params.get(2)), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
             Imgproc.putText(frame, String.format("rotation: %.1f %.1f %.1f", params.get(3)*180/Math.PI, params.get(4)*180/Math.PI, params.get(5)*180/Math.PI), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));
         } else {
