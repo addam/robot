@@ -1,1 +1,1 @@
-include ':usb-serial-for-android:usbSerialForAndroid', ':app'
+include ':usb-serial-for-android:usbSerialForAndroid', ':app', ':openCVLibrary340'
