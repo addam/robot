@@ -105,7 +105,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 game.robot.y = params.get(1);
                 game.rotation = params.get(3);
                 String status = game.gameOff();
-                Imgproc.putText(frame, status, new Point(10, 30), 0, 0.4, new Scalar(255, 128, 0));
+                if (status.length() > 2) {
+                    Imgproc.putText(frame, status, new Point(10, 30), 0, 0.25, new Scalar(255, 128, 0));
+                    if (status.length() > 30) {
+                        Imgproc.putText(frame, status.substring(40), new Point(10, 40), 0, 0.25, new Scalar(255, 128, 0));
+                    }
+                }
             }
             Imgproc.putText(frame, String.format("translation: %.2f %.2f %.2f", params.get(0), params.get(1), params.get(2)), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
             Imgproc.putText(frame, String.format("rotation: %.1f %.1f %.1f", params.get(3)*180/Math.PI, params.get(4)*180/Math.PI, params.get(5)*180/Math.PI), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));

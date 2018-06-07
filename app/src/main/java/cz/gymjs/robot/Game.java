@@ -18,8 +18,9 @@ public class Game {
     int collectedCans;
     int state;
 
-    Game(MotorController motors) throws IOException {
+    Game(MotorController _motors) throws IOException {
         //TODO: nastavení při spuštění hry
+        motors = _motors;
         startTime = System.nanoTime();
         robot = new Point();
     }
