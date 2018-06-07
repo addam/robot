@@ -8,10 +8,10 @@ import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.*;
-import android.widget.SeekBar;
+import android.view.SurfaceView;
+import android.view.Window;
+import android.view.WindowManager;
 import org.opencv.android.*;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 game.robot.x = params.get(0);
                 game.robot.y = params.get(1);
                 game.rotation = params.get(3);
-                game.gameOn();
+                game.gameOff();
             }
             Imgproc.putText(frame, String.format("translation: %.2f %.2f %.2f", params.get(0), params.get(1), params.get(2)), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
             Imgproc.putText(frame, String.format("rotation: %.1f %.1f %.1f", params.get(3)*180/Math.PI, params.get(4)*180/Math.PI, params.get(5)*180/Math.PI), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));

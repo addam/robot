@@ -6,23 +6,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Game {
-    boolean IsLoaded;
+public class Game {
     MotorController motors;
     Point robot;
-    int CollectedCans[] = new int[0];
-    double rotation;
     List<Point> plechovky = new ArrayList<>();
     List<Point> roboti = new ArrayList<>();
-    Point can;
-    long startTime = System.nanoTime();
-    long endTime = System.nanoTime();
-    long totalTime = endTime - startTime;
-    int N;
-    int collectedCans;
     Point enemy;
+    boolean isLoaded;
+    double rotation;
+    long startTime = System.nanoTime();
+    int collectedCans;
     int state;
-    private boolean isLoaded;
 
     Game(MotorController motors) throws IOException {
         //TODO: nastavení při spuštění hry
@@ -31,7 +25,7 @@ public abstract class Game {
 
     void jizda(Point target) {
         float speed = 300;
-        float beta = (float) Math.atan2(can.y - robot.y, can.x - robot.x);
+        float beta = (float) Math.atan2(target.y - robot.y, target.x - robot.x);
         float alfa = (float) (beta + rotation);
         float c = (float) (1 / Math.tan(alfa));
         float[] motory = new float[2];
@@ -53,26 +47,24 @@ public abstract class Game {
         }
     }
 
-    void GameOff() {
-        {
-            if (20 < robot.y && robot.y < 100 && robot.x < 20) {
-                jizda(new Point(0, 120));
-            }
-            if (100 < robot.y && robot.x < 100 && 0 < robot.x) {
-                jizda(new Point(120, 120));
-            }
-            if (20 < robot.y && robot.y < 100 && 100 < robot.x) {
-                jizda(new Point(120, 0));
-            }
-            if (robot.y < 20 && robot.x < 100 && 20 < robot.x) {
-                jizda(new Point(0, 0));
-            } else {
-                jizda(new Point(0, 0));
-            }
+    public void gameOff() {
+        if (20 < robot.y && robot.y < 100 && robot.x < 20) {
+            jizda(new Point(0, 120));
+        }
+        if (100 < robot.y && robot.x < 100 && 0 < robot.x) {
+            jizda(new Point(120, 120));
+        }
+        if (20 < robot.y && robot.y < 100 && 100 < robot.x) {
+            jizda(new Point(120, 0));
+        }
+        if (robot.y < 20 && robot.x < 100 && 20 < robot.x) {
+            jizda(new Point(0, 0));
+        } else {
+            jizda(new Point(0, 0));
         }
     }
 
-    public void Gameon() throws IOException, InterruptedException {
+    public void gameOn() throws IOException, InterruptedException {
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
         double distance1 = Math.sqrt(Math.pow(robot.x - enemy.x, 2) + (Math.pow(robot.y - enemy.y, 2)));
@@ -100,10 +92,11 @@ public abstract class Game {
                 }
                 if (vyberPlechovku(plechovky) >= 0) {
                     Point pl = plechovky.get(vyberPlechovku(plechovky));
-                    double distance = Math.sqrt(Math.pow(robot.x - can.x, 2) + (Math.pow(robot.y - can.y, 2)));
+                    double distance = Math.sqrt(Math.pow(robot.x - pl.x, 2) + (Math.pow(robot.y - pl.y, 2)));
                     if (distance < 5) {
-                        if ((true)) IsLoaded = true;
-                        else IsLoaded = false;
+                        // TODO wtf?
+                        if ((true)) isLoaded = true;
+                        else isLoaded = false;
                         state = 2;
                     } else if (state == 2) {
                         motors.rotate(100, 100);
@@ -124,6 +117,5 @@ public abstract class Game {
     private int vyberPlechovku(List<Point> plechovky) {
         return 0;
     }
-
 }
 
