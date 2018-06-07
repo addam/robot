@@ -8,10 +8,10 @@ import java.util.List;
 
 public class Game {
     MotorController motors;
-    Point robot;
+    Point robot = new Point();
     List<Point> plechovky = new ArrayList<>();
     List<Point> roboti = new ArrayList<>();
-    Point enemy;
+    Point enemy = new Point();
     boolean isLoaded;
     double rotation;
     long startTime = System.nanoTime();
@@ -20,47 +20,57 @@ public class Game {
 
     Game(MotorController motors) throws IOException {
         //TODO: nastavení při spuštění hry
-        long startTime = System.nanoTime();
+        startTime = System.nanoTime();
+        robot = new Point();
     }
 
     void jizda(Point target) {
-        float speed = 300;
+        int speed = 300;
         float beta = (float) Math.atan2(target.y - robot.y, target.x - robot.x);
         float alfa = (float) (beta + rotation);
         float c = (float) (1 / Math.tan(alfa));
-        float[] motory = new float[2];
+        int levy, pravy;
         if (alfa < 0) {
-            motory[0] = speed;
+            levy = speed;
             if (alfa > -Math.PI / 2) {
-                motory[1] = c * speed;
+                pravy = (int) c * speed;
             } else {
-                motory[1] = 0;
+                pravy = 0;
             }
 
         } else {
-            motory[1] = speed;
+            pravy = speed;
             if (alfa < Math.PI / 2) {
-                motory[0] = c * speed;
+                levy = (int) c * speed;
             } else {
-                motory[0] = 0;
+                levy = 0;
             }
+        }
+        try {
+            motors.rotate(levy, pravy);
+        } catch (IOException e) {
         }
     }
 
-    public void gameOff() {
-        if (20 < robot.y && robot.y < 100 && robot.x < 20) {
-            jizda(new Point(0, 120));
-        }
-        if (100 < robot.y && robot.x < 100 && 0 < robot.x) {
-            jizda(new Point(120, 120));
-        }
-        if (20 < robot.y && robot.y < 100 && 100 < robot.x) {
-            jizda(new Point(120, 0));
-        }
-        if (robot.y < 20 && robot.x < 100 && 20 < robot.x) {
-            jizda(new Point(0, 0));
-        } else {
-            jizda(new Point(0, 0));
+    public String gameOff() {
+        try {
+            if (20 < robot.y && robot.y < 100 && robot.x < 20) {
+                jizda(new Point(0, 120));
+            }
+            if (100 < robot.y && robot.x < 100 && 0 < robot.x) {
+                jizda(new Point(120, 120));
+            }
+            if (20 < robot.y && robot.y < 100 && 100 < robot.x) {
+                jizda(new Point(120, 0));
+            }
+            if (robot.y < 20 && robot.x < 100 && 20 < robot.x) {
+                jizda(new Point(0, 0));
+            } else {
+                jizda(new Point(0, 0));
+            }
+            return "OK";
+        } catch (Exception e) {
+            return e.getLocalizedMessage();
         }
     }
 

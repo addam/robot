@@ -40,10 +40,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.CAMERA}, 100);
@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onCameraViewStarted(int width, int height) {
         origSize = new Size(width, height);
-        tracker = new Tracker(new Size(320, 240));
+        tracker = new Tracker(new Size(320, height * 320 / width));
     }
 
     @Override
@@ -100,11 +100,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Mat predictedFrame = tracker.warpedGrid();
         if (isTracking && tracker.updateHomography(predictedFrame, frame)) {
             List<Double> params = tracker.pose();
-            if (isPlaying) {
+            if (isPlaying && game != null) {
                 game.robot.x = params.get(0);
                 game.robot.y = params.get(1);
                 game.rotation = params.get(3);
-                game.gameOff();
+                String status = game.gameOff();
+                Imgproc.putText(frame, status, new Point(10, 30), 0, 0.4, new Scalar(255, 128, 0));
             }
             Imgproc.putText(frame, String.format("translation: %.2f %.2f %.2f", params.get(0), params.get(1), params.get(2)), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
             Imgproc.putText(frame, String.format("rotation: %.1f %.1f %.1f", params.get(3)*180/Math.PI, params.get(4)*180/Math.PI, params.get(5)*180/Math.PI), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));
@@ -113,7 +114,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             isTracking = false;
         }
         for (Point p : tracker.warpedPoints().toArray()) {
-            Imgproc.circle(frame, p, 2, new Scalar(0, isTracking ? 255:0, isTracking ? 0:255), -1);
+            Scalar color = isTracking ? isPlaying ? new Scalar(255, 0, 0) : new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
+            Imgproc.circle(frame, p, 2, color, -1);
         }
         if (frame.cols() != origSize.width) {
             Imgproc.resize(frame, frame, origSize);
