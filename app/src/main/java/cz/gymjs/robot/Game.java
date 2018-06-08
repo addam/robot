@@ -79,11 +79,17 @@ public class Game {
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
         double distance1 = Math.sqrt(Math.pow(robot.x - enemy.x, 2) + (Math.pow(robot.y - enemy.y, 2)));
-        if (distance1 < 10) {
-            motors.rotate(-200, -200);
-            Thread.sleep(2500);
-        }
-        if (totalTime > 1500000000) {
+        if (plechovky.isEmpty()) ;
+        {
+            if ( roboti.isEmpty();
+            {
+                motors.rotate(-150, -150);
+            }
+            if (distance1 < 10) {
+                motors.rotate(-200, -200);
+                Thread.sleep(2500);
+            }
+        } if (totalTime > 1500000000) {
             if (100 < robot.y && robot.y < 140) {
                 jizda(new Point(120, 120));
             } else {
