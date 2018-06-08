@@ -53,6 +53,20 @@ public class Game {
         }
     }
 
+    public void evilplan() throws IOException, InterruptedException {
+        motors.rotate(100, 100);
+        Thread.sleep(3500);
+        motors.rotate(-100, 100);
+        Thread.sleep(1000);
+        motors.rotate(100, 100);
+        Thread.sleep(3500);
+        Thread.sleep(150000);
+        motors.rotate(100, -100);
+        Thread.sleep(500);
+        motors.rotate(100, 100);
+        Thread.sleep(5500);
+    }
+
     public String gameOff() {
         try {
             if (20 < robot.y && robot.y < 100 && robot.x < 20) {
@@ -81,13 +95,14 @@ public class Game {
         double distance1 = Math.sqrt(Math.pow(robot.x - enemy.x, 2) + (Math.pow(robot.y - enemy.y, 2)));
         if (plechovky.isEmpty()) ;
         {
-                motors.rotate(-150, -150);
+            motors.rotate(-150, -150);
             Thread.sleep(2500);
             if (distance1 < 10) {
                 motors.rotate(-200, -200);
                 Thread.sleep(2500);
             }
-        } if (totalTime > 1500000000) {
+        }
+        if (totalTime > 1500000000) {
             if (100 < robot.y && robot.y < 140) {
                 jizda(new Point(120, 120));
             } else {
