@@ -81,7 +81,7 @@ public class Game {
         double distance1 = Math.sqrt(Math.pow(robot.x - enemy.x, 2) + (Math.pow(robot.y - enemy.y, 2)));
         if (plechovky.isEmpty()) ;
         {
-            if ( roboti.isEmpty();
+            if (enemy.isEmpty()) ;
             {
                 motors.rotate(-150, -150);
             }
