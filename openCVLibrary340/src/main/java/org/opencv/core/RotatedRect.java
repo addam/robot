@@ -8,7 +8,7 @@ public class RotatedRect {
     public double angle;
 
     public RotatedRect() {
-        this.center = new Point(plechovky);
+        this.center = new Point();
         this.size = new Size();
         this.angle = 0;
     }

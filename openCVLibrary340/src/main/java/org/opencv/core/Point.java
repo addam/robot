@@ -1,7 +1,5 @@
 package org.opencv.core;
 
-import java.util.List;
-
 //javadoc:Point_
 public class Point {
 
@@ -12,12 +10,12 @@ public class Point {
         this.y = y;
     }
 
-    public Point(List<Point> plechovky) {
+    public Point() {
         this(0, 0);
     }
 
     public Point(double[] vals) {
-        this(plechovky);
+        this();
         set(vals);
     }
 
