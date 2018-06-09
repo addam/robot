@@ -1,6 +1,5 @@
 package cz.gymjs.robot;
 
-import android.content.Context;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 
@@ -36,7 +35,7 @@ public class MotorController {
     }
 
     public int rotate(int speed1, int speed2) throws IOException {
-        byte[] message = encodeRotation(new int[]{speed1, speed2});
+        byte[] message = encodeRotation(new int[]{speed1, -speed2});
         return port.write(message, 100);
     }
 
