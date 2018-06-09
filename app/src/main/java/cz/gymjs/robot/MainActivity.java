@@ -18,6 +18,7 @@ import org.opencv.imgproc.Imgproc;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
+    String error = "";
     Tracker tracker;
     Game game;
     Size origSize;
@@ -28,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public void onBackPressed() {
+        error = "";
         if (isPlaying) {
             isPlaying = false;
         } else if (isTracking) {
@@ -66,21 +68,23 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         });
 
         view.setOnClickListener(view1 -> {
-            if (isTracking) {
-                if (isPlaying) {
-                    isPlaying = false;
-                } else {
-                    UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-                    try {
+            error = "";
+            try {
+                if (isTracking) {
+                    if (isPlaying) {
+                        isPlaying = false;
+                        motors.rotate(0, 0);
+                    } else {
+                        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
                         motors = new MotorController(manager);
                         game = new Game();
                         isPlaying = true;
-                    } catch (IOException e) {
-                        Log.d("onCreate", "Initialization failed: " + e.getLocalizedMessage());
                     }
+                } else {
+                    isTracking = true;
                 }
-            } else {
-                isTracking = true;
+            } catch (IOException e) {
+                error = e.getLocalizedMessage();
             }
         });
     }
@@ -123,7 +127,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 Imgproc.circle(frame, p, 2, color, -1);
             }
         } catch (Exception e) {
-            Imgproc.putText(frame, e.getLocalizedMessage(), new Point(0, 20), 0, 0.4, new Scalar(255, 64, 0));
+            error = e.getLocalizedMessage();
+        }
+        if (error.length() > 0) {
+            Imgproc.putText(frame, error, new Point(0, 20), 0, 0.4, new Scalar(255, 64, 0));
         }
         if (frame.cols() != origSize.width) {
             Imgproc.resize(frame, frame, origSize);
