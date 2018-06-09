@@ -8,7 +8,6 @@ import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.SurfaceView;
 import android.view.Window;
 import android.view.WindowManager;
@@ -25,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     boolean isTracking;
     boolean isPlaying;
     private MotorController motors;
-    private Simulator simulator;
+    private Simulator simulator = new Simulator();
 
     @Override
     public void onBackPressed() {
@@ -115,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     motors.rotate((int) velocity.x, (int) velocity.y);
                     simulator.setVelocity(velocity);
                 }
-                Imgproc.putText(frame, String.format("x: %.2f y: %.2f rot: %.1f", pose.x, pose.y, pose.z), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
+                Imgproc.putText(frame, String.format("x: %.2f y: %.2f rot: %.1f", pose.x, pose.y, pose.z * 180 / Math.PI), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
             } else {
                 Core.addWeighted(predictedFrame, 0.3, frame, 0.7, 0, frame);
             }

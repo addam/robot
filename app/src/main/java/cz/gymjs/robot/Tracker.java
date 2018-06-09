@@ -80,7 +80,7 @@ public class Tracker {
         Mat rotation = new Mat();
         Calib3d.Rodrigues(vrot, rotation);
         Core.gemm(rotation.t(), vtrans, 1, new Mat(), 0, vtrans);
-        return new Point3(vtrans.get(0, 0)[0], vtrans.get(1, 0)[0], vrot.get(0, 0)[0]);
+        return new Point3(vtrans.get(0, 0)[0], vtrans.get(1, 0)[0], -vrot.get(0, 0)[0]);
     }
 
     private static MatOfPoint2f trackPoints(MatOfPoint2f leftPoints, Mat leftImg, Mat rightImg) {

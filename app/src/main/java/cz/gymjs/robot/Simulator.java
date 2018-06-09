@@ -22,7 +22,8 @@ class Simulator {
     }
 
     protected static double norm(Point3 a) {
-        return Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+        double rotationPenalty = 5;
+        return Math.sqrt(a.x * a.x + a.y * a.y + rotationPenalty * a.z * a.z);
     }
 
     public void setVelocity(Point _velocity) {

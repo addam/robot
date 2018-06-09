@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Serial</string>
+    <string name="app_name">Robot Control</string>
     <string name="action_settings">Settings</string>
 </resources>
