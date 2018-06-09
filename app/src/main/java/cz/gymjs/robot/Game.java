@@ -1,14 +1,12 @@
 package cz.gymjs.robot;
 
 import org.opencv.core.Point;
+import org.opencv.core.Point3;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Game {
-    MotorController motors;
-    Point robot = new Point(0, 0);
     List<Point> plechovky = new ArrayList<>();
     List<Point> roboti = new ArrayList<>();
     Point enemy = new Point(0, 0);
@@ -19,16 +17,14 @@ public class Game {
     int state;
     private int faze = 0;
 
-    Game(MotorController _motors) {
-        motors = _motors;
+    Game() {
         startTime = System.nanoTime();
-        robot = new Point(0, 0);
     }
 
-    void jizda(Point target) {
+    protected static Point jizda(Point3 pose, double targetX, double targetY) {
         int speed = 300;
-        float beta = (float) Math.atan2(target.y - robot.y, target.x - robot.x);
-        float alfa = (float) (beta + rotation);
+        float beta = (float) Math.atan2(targetY - pose.y, targetX - pose.x);
+        float alfa = (float) (beta + pose.z);
         float c = (float) (1 / Math.tan(alfa));
         int levy, pravy;
         if (alfa < 0) {
@@ -47,34 +43,27 @@ public class Game {
                 levy = 0;
             }
         }
-        try {
-            motors.rotate(levy, pravy);
-        } catch (IOException e) {
+        return new Point(levy, pravy);
+    }
+
+    public Point gameOff(Point3 pose) {
+        if (20 < pose.y && pose.y < 100 && pose.x < 20) {
+            return jizda(pose, 0, 120);
+        }
+        if (100 < pose.y && pose.x < 100 && 0 < pose.x) {
+            return jizda(pose, 120, 120);
+        }
+        if (20 < pose.y && pose.y < 100 && 100 < pose.x) {
+            return jizda(pose, 120, 0);
+        }
+        if (pose.y < 20 && pose.x < 100 && 20 < pose.x) {
+            return jizda(pose, 0, 0);
+        } else {
+            return jizda(pose, 0, 0);
         }
     }
 
-    public String gameOff() {
-        try {
-            if (20 < robot.y && robot.y < 100 && robot.x < 20) {
-                jizda(new Point(0, 120));
-            }
-            if (100 < robot.y && robot.x < 100 && 0 < robot.x) {
-                jizda(new Point(120, 120));
-            }
-            if (20 < robot.y && robot.y < 100 && 100 < robot.x) {
-                jizda(new Point(120, 0));
-            }
-            if (robot.y < 20 && robot.x < 100 && 20 < robot.x) {
-                jizda(new Point(0, 0));
-            } else {
-                jizda(new Point(0, 0));
-            }
-            return "OK";
-        } catch (Exception e) {
-            return e.getLocalizedMessage();
-        }
-    }
-
+    /*
     public void gameOn() throws IOException, InterruptedException {
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
@@ -133,5 +122,6 @@ public class Game {
     private int vyberPlechovku(List<Point> plechovky) {
         return 0;
     }
+    */
 }
 

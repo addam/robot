@@ -17,7 +17,6 @@ import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     Tracker tracker;
@@ -25,6 +24,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     Size origSize;
     boolean isTracking;
     boolean isPlaying;
+    private MotorController motors;
+    private Simulator simulator;
 
     @Override
     public void onBackPressed() {
@@ -67,13 +68,17 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         view.setOnClickListener(view1 -> {
             if (isTracking) {
-                UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-                try {
-                    MotorController motors = new MotorController(manager);
-                    game = new Game(motors);
-                    isPlaying = true;
-                } catch (IOException e) {
-                    Log.d("onCreate", "Initialization failed: " + e.getLocalizedMessage());
+                if (isPlaying) {
+                    isPlaying = false;
+                } else {
+                    UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+                    try {
+                        motors = new MotorController(manager);
+                        game = new Game();
+                        isPlaying = true;
+                    } catch (IOException e) {
+                        Log.d("onCreate", "Initialization failed: " + e.getLocalizedMessage());
+                    }
                 }
             } else {
                 isTracking = true;
@@ -94,33 +99,32 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputData) {
         Mat frame = inputData.rgba();
-        if (frame.cols() != tracker.size.width) {
-            Imgproc.resize(frame, frame, tracker.size);
-        }
-        Mat predictedFrame = tracker.warpedGrid();
-        if (isTracking && tracker.updateHomography(predictedFrame, frame)) {
-            List<Double> params = tracker.pose();
-            if (isPlaying && game != null) {
-                game.robot.x = params.get(0);
-                game.robot.y = params.get(1);
-                game.rotation = params.get(3);
-                String status = game.gameOff();
-                if (status.length() > 2) {
-                    Imgproc.putText(frame, status, new Point(10, 30), 0, 0.25, new Scalar(255, 128, 0));
-                    if (status.length() > 30) {
-                        Imgproc.putText(frame, status.substring(40), new Point(10, 40), 0, 0.25, new Scalar(255, 128, 0));
-                    }
-                }
+        try {
+            if (frame.cols() != tracker.size.width) {
+                Imgproc.resize(frame, frame, tracker.size);
             }
-            Imgproc.putText(frame, String.format("translation: %.2f %.2f %.2f", params.get(0), params.get(1), params.get(2)), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
-            Imgproc.putText(frame, String.format("rotation: %.1f %.1f %.1f", params.get(3)*180/Math.PI, params.get(4)*180/Math.PI, params.get(5)*180/Math.PI), new Point(10, 20), 0, 0.4, new Scalar(255, 255, 0));
-        } else {
-            Core.addWeighted(predictedFrame, 0.3, frame, 0.7, 0, frame);
-            isTracking = false;
-        }
-        for (Point p : tracker.warpedPoints().toArray()) {
-            Scalar color = isTracking ? isPlaying ? new Scalar(255, 0, 0) : new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
-            Imgproc.circle(frame, p, 2, color, -1);
+            Mat predictedFrame = tracker.warpedGrid();
+            if (isTracking) {
+                if (isPlaying) {
+                    tracker.setPose(simulator.simulatedPose());
+                }
+                Point3 pose = tracker.pose(predictedFrame, frame);
+                if (isPlaying) {
+                    pose = simulator.predictPose(pose);
+                    Point velocity = game.gameOff(pose);
+                    motors.rotate((int) velocity.x, (int) velocity.y);
+                    simulator.setVelocity(velocity);
+                }
+                Imgproc.putText(frame, String.format("x: %.2f y: %.2f rot: %.1f", pose.x, pose.y, pose.z), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
+            } else {
+                Core.addWeighted(predictedFrame, 0.3, frame, 0.7, 0, frame);
+            }
+            for (Point p : tracker.warpedPoints().toArray()) {
+                Scalar color = isTracking ? isPlaying ? new Scalar(255, 0, 0) : new Scalar(0, 255, 0) : new Scalar(0, 0, 255);
+                Imgproc.circle(frame, p, 2, color, -1);
+            }
+        } catch (Exception e) {
+            Imgproc.putText(frame, e.getLocalizedMessage(), new Point(0, 20), 0, 0.4, new Scalar(255, 64, 0));
         }
         if (frame.cols() != origSize.width) {
             Imgproc.resize(frame, frame, origSize);
