@@ -19,8 +19,7 @@ public class Game {
     int state;
     private int faze = 0;
 
-    Game(MotorController _motors) throws IOException {
-        //TODO: nastavení při spuštění hry
+    Game(MotorController _motors) {
         motors = _motors;
         startTime = System.nanoTime();
         robot = new Point(0, 0);
@@ -52,65 +51,6 @@ public class Game {
             motors.rotate(levy, pravy);
         } catch (IOException e) {
         }
-    }
-
-    void otaceni(double stupne) throws IOException, InterruptedException {
-        if (stupne > 0) {
-            motors.rotate(1000, 0);
-        } else {
-            motors.rotate(-1000, 0);
-        }
-        Thread.sleep((long) (1000 * stupne / 53));
-    }
-
-    void dopredu(double centimetry) throws IOException, InterruptedException {
-        if (centimetry > 0) {
-            motors.rotate(1000, 1000);
-        } else {
-            motors.rotate(-1000, -1000);
-        }
-        Thread.sleep((long) (1000 * centimetry / 15.2));
-    }
-
-    void stuj() throws InterruptedException, IOException {
-        motors.rotate(0, 0);
-        Thread.sleep(20000);
-    }
-    public void evilplan() throws IOException, InterruptedException {
-        if (faze == 0) {
-            otaceni(16.4);
-            dopredu(61.7);
-            motors.rotate(0, 0);
-        } else if (faze == 1) {
-            otaceni(156.6);
-            dopredu(58.3 - 18);
-            dopredu(-10);
-            motors.rotate(0, 0);
-        } else if (faze == 2) {
-            stuj();
-            otaceni(-180 + 6.5 + 12);
-            dopredu(120);
-            motors.rotate(0, 0);
-        } else if (faze == 3) {
-            otaceni(-90 - 12);
-            dopredu(130);
-            motors.rotate(0, 0);
-        } else {
-            stuj();
-        }
-        faze += 1;
-
-
-        /*motors.rotate(-100, 100);
-        Thread.sleep(1000);
-        motors.rotate(100, 100);
-        Thread.sleep(3500);
-        Thread.sleep(1500);
-        motors.rotate(100, -100);
-        Thread.sleep(500);
-        motors.rotate(100, 100);
-        Thread.sleep(5500);
-     */
     }
 
     public String gameOff() {

@@ -12,17 +12,8 @@ import android.util.Log;
 import android.view.SurfaceView;
 import android.view.Window;
 import android.view.WindowManager;
-
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.JavaCameraView;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
+import org.opencv.android.*;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
@@ -110,21 +101,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if (isTracking && tracker.updateHomography(predictedFrame, frame)) {
             List<Double> params = tracker.pose();
             if (isPlaying && game != null) {
-                try {
-                    game.evilplan();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (false) {
-                    game.robot.x = params.get(0);
-                    game.robot.y = params.get(1);
-                    game.rotation = params.get(3);
-                    String status = game.gameOff();
-                    if (status.length() > 2) {
-                        Imgproc.putText(frame, status, new Point(10, 30), 0, 0.25, new Scalar(255, 128, 0));
-                        if (status.length() > 30) {
-                            Imgproc.putText(frame, status.substring(40), new Point(10, 40), 0, 0.25, new Scalar(255, 128, 0));
-                        }
+                game.robot.x = params.get(0);
+                game.robot.y = params.get(1);
+                game.rotation = params.get(3);
+                String status = game.gameOff();
+                if (status.length() > 2) {
+                    Imgproc.putText(frame, status, new Point(10, 30), 0, 0.25, new Scalar(255, 128, 0));
+                    if (status.length() > 30) {
+                        Imgproc.putText(frame, status.substring(40), new Point(10, 40), 0, 0.25, new Scalar(255, 128, 0));
                     }
                 }
             }
