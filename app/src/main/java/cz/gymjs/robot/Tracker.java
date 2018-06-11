@@ -1,6 +1,6 @@
 package cz.gymjs.robot;
 
-import android.util.Log;
+import android.util.Pair;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
@@ -11,21 +11,23 @@ import java.util.List;
 
 import static org.opencv.calib3d.Calib3d.solvePnP;
 import static org.opencv.core.Core.FILLED;
-import static org.opencv.core.CvType.*;
+import static org.opencv.core.CvType.CV_64F;
+import static org.opencv.core.CvType.CV_8UC4;
 import static org.opencv.utils.Converters.vector_Point2f_to_Mat;
 import static org.opencv.utils.Converters.vector_Point3f_to_Mat;
 
-public class Tracker {
-    private Mat homography;
+class Tracker {
+    Mat homography;
     private Mat cameraMatrix;
-    private Grid grid = new Grid(40);
+    Grid grid = new Grid(40);
     Size size;
 
     Tracker(Size _size) {
         size = _size;
         double focal_length = size.width;
-        cameraMatrix = new Mat(3, 3, CV_32F);
-        cameraMatrix.put(0, 0, focal_length, 0, size.width / 2, 0, focal_length, size.height / 2, 0, 0, 1);
+        double centerX = size.width / 2, centerY = size.height / 2;
+        cameraMatrix = new Mat(3, 3, CV_64F);
+        cameraMatrix.put(0, 0, focal_length, 0, centerX, 0, focal_length, centerY, 0, 0, 1);
         reset();
     }
 
@@ -57,30 +59,22 @@ public class Tracker {
         return result;
     }
 
-    protected boolean updateHomography(Mat leftFrame, Mat rightFrame) {
-        MatOfPoint2f leftPoints = warpedPoints();
-        MatOfPoint2f rightPoints = trackPoints(leftPoints, leftFrame, rightFrame);
-        if (rightPoints.rows() < 4) {
-            return false;
-        }
-        Mat diff = Calib3d.findHomography(leftPoints, rightPoints, Calib3d.RANSAC, 10);
-        if (diff.empty()) {
-            return false;
-        }
-        Core.gemm(diff, homography, 1, new Mat(), 0, homography);
-        return true;
+    static Pair<Point3, Point3> reflectPose(Point3 vtrans, Point3 vrot) {
+        Mat rotation = new Mat();
+        Calib3d.Rodrigues(toMat(vrot), rotation);
+        Mat mtrans = new Mat();
+        Core.gemm(rotation.t(), toMat(vtrans), 1, new Mat(), 0, mtrans);
+        return new Pair<>(toPoint3(mtrans), new Point3(-vrot.x, -vrot.y, -vrot.z));
     }
 
-    protected Point3 pose(Mat leftFrame, Mat rightFrame) {
-        updateHomography(leftFrame, rightFrame);
-        Mat vrot = new Mat(), vtrans = new Mat();
-        MatOfPoint2f keyPoints = new MatOfPoint2f(vector_Point2f_to_Mat(grid.keyPoints()));
-        Core.perspectiveTransform(keyPoints, keyPoints, homography);
-        solvePnP(grid.objectPoints(), keyPoints, cameraMatrix, new MatOfDouble(), vrot, vtrans);
-        Mat rotation = new Mat();
-        Calib3d.Rodrigues(vrot, rotation);
-        Core.gemm(rotation.t(), vtrans, 1, new Mat(), 0, vtrans);
-        return new Point3(vtrans.get(0, 0)[0], vtrans.get(1, 0)[0], -vrot.get(0, 0)[0]);
+    private static Mat toMat(Point3 point) {
+        Mat result = new Mat(3, 1, CV_64F);
+        result.put(0, 0, point.x, point.y, point.z);
+        return result;
+    }
+
+    private static Point3 toPoint3(Mat mat) {
+        return new Point3(mat.get(0, 0)[0], mat.get(1, 0)[0], mat.get(2, 0)[0]);
     }
 
     private static MatOfPoint2f trackPoints(MatOfPoint2f leftPoints, Mat leftImg, Mat rightImg) {
@@ -101,7 +95,6 @@ public class Tracker {
                 ++write;
             }
         }
-        Log.d("trackPoints", write + " good points out of " + leftPoints.rows());
         if (write == 0) {
             return new MatOfPoint2f();
         } else {
@@ -111,24 +104,42 @@ public class Tracker {
         }
     }
 
-    public Mat warpedGrid() {
+    private boolean updateHomography(Mat leftFrame, Mat rightFrame) {
+        MatOfPoint2f leftPoints = warpedPoints();
+        MatOfPoint2f rightPoints = trackPoints(leftPoints, leftFrame, rightFrame);
+        if (rightPoints.rows() >= 4) {
+            return false;
+        }
+        Mat diff = Calib3d.findHomography(leftPoints, rightPoints, Calib3d.RANSAC, 10);
+        if (diff.empty()) {
+            return false;
+        }
+        Core.gemm(diff, homography, 1, new Mat(), 0, homography);
+        return true;
+    }
+
+    Pair<Point3, Point3> pose(Mat leftFrame, Mat rightFrame) {
+        updateHomography(leftFrame, rightFrame);
+        Mat vrot = new Mat(), vtrans = new Mat();
+        MatOfPoint2f keyPoints = new MatOfPoint2f(vector_Point2f_to_Mat(grid.keyPoints()));
+        Core.perspectiveTransform(keyPoints, keyPoints, homography);
+        solvePnP(grid.objectPoints(), keyPoints, cameraMatrix, new MatOfDouble(), vrot, vtrans);
+        return new Pair<>(toPoint3(vtrans), toPoint3(vrot));
+    }
+
+    Mat warpedGrid() {
         Mat result = new Mat();
         Imgproc.warpPerspective(grid.image, result, homography, size);
         return result;
     }
 
-    public void setPose(Point3 pose) {
-        Mat vrot = new Mat(3, 0, CV_64F);
-        vrot.put(0, 0, pose.z, 0, 0);
-        Mat r = new Mat();
-        Calib3d.Rodrigues(vrot, r);
-        Mat transformation = new Mat(3, 3, CV_64F);
-        transformation.put(0, 0,
-                r.get(0, 0)[0], r.get(0, 1)[0], pose.x,
-                r.get(1, 0)[0], r.get(1, 1)[0], pose.y,
-                r.get(2, 0)[0], r.get(2, 1)[0], 0
-        );
-        Core.gemm(cameraMatrix, transformation, 1, new Mat(), 0, homography);
+    void setPose(Pair<Point3, Point3> pose) {
+        Mat tsf = new Mat(3, 4, CV_64F, Scalar.all(0));
+        Calib3d.Rodrigues(toMat(pose.second), tsf.submat(new Rect(0, 0, 3, 3)));
+        toMat(pose.first).copyTo(tsf.submat(new Rect(3, 0, 1, 3)));
+        tsf.col(3).copyTo(tsf.col(2));
+        tsf = tsf.colRange(0, 3);
+        Core.gemm(cameraMatrix, tsf, 1, new Mat(), 0, homography);
     }
 }
 
@@ -146,7 +157,7 @@ class Grid {
         for (int i = 1; i <= count; ++i) {
             Imgproc.rectangle(image, new Point(i * size, size), new Point(i * size + width, count * size), new Scalar(0, 0, 0), FILLED);
             Imgproc.rectangle(image, new Point(size, i * size), new Point(count * size, i * size + width), new Scalar(0, 0, 0), FILLED);
-        };
+        }
     }
 
     List<Point> keyPoints() {
@@ -174,10 +185,9 @@ class Grid {
 
     MatOfPoint3f objectPoints() {
         List<Point3> result = new ArrayList<>();
-        result.add(new Point3(size, size, 0));
-        result.add(new Point3(count * size + width, size, 0));
-        result.add(new Point3(size, count * size + width, 0));
-        result.add(new Point3(count * size + width, count * size + width, 0));
+        for (Point p : keyPoints()) {
+            result.add(new Point3(p));
+        }
         return new MatOfPoint3f(vector_Point3f_to_Mat(result));
     }
 }

@@ -46,20 +46,20 @@ public class Game {
         return new Point(levy, pravy);
     }
 
-    public Point gameOff(Point3 pose) {
-        if (20 < pose.y && pose.y < 100 && pose.x < 20) {
-            return jizda(pose, 0, 120);
+    public Point gameOff(Point3 position, Point3 rotation) {
+        if (20 < position.y && position.y < 100 && position.x < 20) {
+            return jizda(position, 0, 120);
         }
-        if (100 < pose.y && pose.x < 100 && 0 < pose.x) {
-            return jizda(pose, 120, 120);
+        if (100 < position.y && position.x < 100 && 0 < position.x) {
+            return jizda(position, 120, 120);
         }
-        if (20 < pose.y && pose.y < 100 && 100 < pose.x) {
-            return jizda(pose, 120, 0);
+        if (20 < position.y && position.y < 100 && 100 < position.x) {
+            return jizda(position, 120, 0);
         }
-        if (pose.y < 20 && pose.x < 100 && 20 < pose.x) {
-            return jizda(pose, 0, 0);
+        if (position.y < 20 && position.x < 100 && 20 < position.x) {
+            return jizda(position, 0, 0);
         } else {
-            return jizda(pose, 0, 0);
+            return jizda(position, 0, 0);
         }
     }
 

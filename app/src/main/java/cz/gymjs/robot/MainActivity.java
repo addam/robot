@@ -8,6 +8,7 @@ import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Pair;
 import android.view.SurfaceView;
 import android.view.Window;
 import android.view.WindowManager;
@@ -16,22 +17,29 @@ import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
-    String error = "";
-    Tracker tracker;
-    Game game;
-    Size origSize;
-    boolean isTracking;
-    boolean isPlaying;
+    private String error;
+    private Tracker tracker;
+    private Game game;
+    private Size origSize;
+    private boolean isTracking;
+    private boolean isPlaying;
     private MotorController motors;
     private Simulator simulator = new Simulator();
 
     @Override
     public void onBackPressed() {
-        error = "";
+        error = null;
         if (isPlaying) {
             isPlaying = false;
+            if (motors != null) {
+                try {
+                    motors.rotate(0, 0);
+                } catch (IOException ignored) {
+                }
+            }
         } else if (isTracking) {
             isTracking = false;
         } else if (!tracker.reset()) {
@@ -68,17 +76,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         });
 
         view.setOnClickListener(view1 -> {
-            error = "";
+            error = null;
             try {
                 if (isTracking) {
                     if (isPlaying) {
                         isPlaying = false;
-                        motors.rotate(0, 0);
+                        if (motors != null) {
+                            motors.rotate(0, 0);
+                        }
                     } else {
                         UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-                        motors = new MotorController(manager);
                         game = new Game();
                         isPlaying = true;
+                        motors = new MotorController(manager);
                     }
                 } else {
                     isTracking = true;
@@ -108,17 +118,22 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             }
             Mat predictedFrame = tracker.warpedGrid();
             if (isTracking) {
+                Pair<Point3, Point3> gridPose = tracker.pose(predictedFrame, frame);
+                Pair<Point3, Point3> robotPose = Tracker.reflectPose(gridPose.first, gridPose.second);
                 if (isPlaying) {
-                    tracker.setPose(simulator.simulatedPose());
-                }
-                Point3 pose = tracker.pose(predictedFrame, frame);
-                if (isPlaying) {
-                    pose = simulator.predictPose(pose);
-                    Point velocity = game.gameOff(pose);
-                    motors.rotate((int) velocity.x, (int) velocity.y);
+                    simulator.tunePose(gridPose.first, gridPose.second);
+                    Point velocity = game.gameOff(robotPose.first, robotPose.second);
+                    if (motors != null) {
+                        motors.rotate((int) velocity.x, (int) velocity.y);
+                    } else {
+                        Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %.1f right: %.1f", velocity.x, velocity.y), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
+                    }
                     simulator.setVelocity(velocity);
+                    tracker.setPose(gridPose);
+                    Imgproc.warpPerspective(tracker.grid.image, predictedFrame, tracker.homography, predictedFrame.size());
+                    Core.addWeighted(predictedFrame, 0.3, frame, 0.7, 0, frame);
                 }
-                Imgproc.putText(frame, String.format("x: %.2f y: %.2f rot: %.1f", pose.x, pose.y, pose.z * 180 / Math.PI), new Point(10, 10), 0, 0.4, new Scalar(255, 255, 0));
+                Imgproc.putText(frame, String.format(Locale.ENGLISH, "x: %.2f y: %.2f rot: %.1f", gridPose.first.x, gridPose.first.y, gridPose.second.z * 180 / Math.PI), new Point(10, 10), 0, 0.4, new Scalar(0, 255, 255));
             } else {
                 Core.addWeighted(predictedFrame, 0.3, frame, 0.7, 0, frame);
             }
@@ -127,10 +142,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 Imgproc.circle(frame, p, 2, color, -1);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             error = e.getLocalizedMessage();
         }
-        if (error.length() > 0) {
-            Imgproc.putText(frame, error, new Point(0, 20), 0, 0.4, new Scalar(255, 64, 0));
+        if (error != null) {
+            for (int y = 20; error.length() > 50; y += 10) {
+                Imgproc.putText(frame, error, new Point(0, y), 0, 0.4, new Scalar(255, 64, 0));
+                error = error.substring(50);
+            }
         }
         if (frame.cols() != origSize.width) {
             Imgproc.resize(frame, frame, origSize);

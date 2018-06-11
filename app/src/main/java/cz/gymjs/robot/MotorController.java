@@ -2,7 +2,6 @@ package cz.gymjs.robot;
 
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
-
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
@@ -11,7 +10,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class MotorController {
-    UsbSerialPort port;
+    private UsbSerialPort port;
     MotorController(UsbManager manager) throws IOException {
         List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
         if (availableDrivers.isEmpty()) {
@@ -31,12 +30,14 @@ public class MotorController {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        port.close();
+        if (port != null) {
+            port.close();
+        }
     }
 
-    public int rotate(int speed1, int speed2) throws IOException {
+    void rotate(int speed1, int speed2) throws IOException {
         byte[] message = encodeRotation(new int[]{speed1, -speed2});
-        return port.write(message, 100);
+        port.write(message, 100);
     }
 
     private byte[] encodeRotation(int[] speed) {
