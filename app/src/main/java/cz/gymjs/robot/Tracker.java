@@ -107,7 +107,7 @@ class Tracker {
     private boolean updateHomography(Mat leftFrame, Mat rightFrame) {
         MatOfPoint2f leftPoints = warpedPoints();
         MatOfPoint2f rightPoints = trackPoints(leftPoints, leftFrame, rightFrame);
-        if (rightPoints.rows() >= 4) {
+        if (rightPoints.rows() < 4) {
             return false;
         }
         Mat diff = Calib3d.findHomography(leftPoints, rightPoints, Calib3d.RANSAC, 10);

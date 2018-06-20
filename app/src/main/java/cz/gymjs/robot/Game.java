@@ -22,7 +22,7 @@ public class Game {
     }
 
     protected static Point jizda(Point3 pose, double targetX, double targetY) {
-        int speed = 300;
+        int speed = 30;
         float beta = (float) Math.atan2(targetY - pose.y, targetX - pose.x);
         float alfa = (float) (beta + pose.z);
         float c = (float) (1 / Math.tan(alfa));

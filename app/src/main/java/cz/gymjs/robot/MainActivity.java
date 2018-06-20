@@ -8,6 +8,7 @@ import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.util.Pair;
 import android.view.SurfaceView;
 import android.view.Window;
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 if (isTracking) {
                     if (isPlaying) {
                         isPlaying = false;
+                        simulator.reset();
                         if (motors != null) {
                             motors.rotate(0, 0);
                         }
@@ -121,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 Pair<Point3, Point3> gridPose = tracker.pose(predictedFrame, frame);
                 Pair<Point3, Point3> robotPose = Tracker.reflectPose(gridPose.first, gridPose.second);
                 if (isPlaying) {
+                    Log.d("onCameraFrame", "simulate...");
                     simulator.tunePose(gridPose.first, gridPose.second);
                     Point velocity = game.gameOff(robotPose.first, robotPose.second);
                     if (motors != null) {
