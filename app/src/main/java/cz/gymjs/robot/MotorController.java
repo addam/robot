@@ -9,6 +9,16 @@ import com.hoho.android.usbserial.driver.UsbSerialProber;
 import java.io.IOException;
 import java.util.List;
 
+class Command {
+    int left;
+    int right;
+
+    public Command(int levy, int pravy) {
+        this.left = levy;
+        this.right = pravy;
+    }
+}
+
 public class MotorController {
     private UsbSerialPort port;
     MotorController(UsbManager manager) throws IOException {
@@ -24,7 +34,6 @@ public class MotorController {
         port = driver.getPorts().get(0);
         port.open(connection);
         port.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-
     }
 
     @Override

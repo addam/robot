@@ -49,21 +49,17 @@ public class Detekce {
             MatOfPoint points = new MatOfPoint(approxCurve.toArray());
             Rect bounds = Imgproc.boundingRect(points);
             int pointCount = points.toList().size();
+            double x = bounds.x + bounds.width / 2;
+            double y = bounds.y + bounds.height * 0.8;
             if (pointCount >= 4) {
                 float ar = bounds.width / (float) bounds.height;
                 if (ar >= 0.50 & ar <= 0.80) {
                     System.out.println("plechovka");
-                    int x = bounds.x + bounds.width / 2;
-                    double y = bounds.y + bounds.height * 0.2;
                     plechovky.add(new Point(x, y));
                 } else {
-                    int x = bounds.x + bounds.width / 2;
-                    double y = bounds.y + bounds.height * 0.2;
                     prekazka.add(new Point(x, y));
                 }
             } else {
-                int x = bounds.x + bounds.width / 2;
-                double y = bounds.y + bounds.height * 0.2;
                 prekazka.add(new Point(x, y));
             }
         }

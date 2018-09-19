@@ -125,11 +125,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 if (isPlaying) {
                     Log.d("onCameraFrame", "simulate...");
                     simulator.tunePose(gridPose.first, gridPose.second);
-                    Point velocity = game.gameOff(robotPose.first, robotPose.second);
+                    Command velocity = game.gameOff(robotPose.first, robotPose.second);
                     if (motors != null) {
-                        motors.rotate((int) velocity.x, (int) velocity.y);
+                        motors.rotate(velocity.left, velocity.right);
                     } else {
-                        Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %.1f right: %.1f", velocity.x, velocity.y), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
+                        Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %.1f right: %.1f", velocity.left, velocity.right), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
                     }
                     simulator.setVelocity(velocity);
                     tracker.setPose(gridPose);

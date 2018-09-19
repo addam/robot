@@ -5,7 +5,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Point3;
 
 class Simulator {
-    private Point velocity = new Point(0, 0);
+    private Command velocity = new Command(0, 0);
     private Point3 position;
     private Point3 rotation;
     private long previousTime = System.nanoTime();
@@ -29,9 +29,9 @@ class Simulator {
         return Math.sqrt(a.x * a.x + a.y * a.y + rot * rot);
     }
 
-    void setVelocity(Point _velocity) {
+    void setVelocity(Command _velocity) {
         double wheelVelocity = 15.2 / 300;
-        velocity = new Point(_velocity.x * wheelVelocity, _velocity.y * wheelVelocity);
+        velocity = new Command((int) (_velocity.left * wheelVelocity), (int) (_velocity.right * wheelVelocity));
         previousTime = System.nanoTime();
     }
 
@@ -39,10 +39,10 @@ class Simulator {
         double time = (previousTime - System.nanoTime()) / 1e9;
         double rotz = rotation.z;
         double radius = 8;
-        double levyX = position.x - radius * Math.cos(rotz) - velocity.x * time * Math.sin(rotz);
-        double levyY = position.y - radius * Math.sin(rotz) + velocity.x * time * Math.cos(rotz);
-        double pravyX = position.x + radius * Math.cos(rotz) - velocity.y * time * Math.sin(rotz);
-        double pravyY = position.y + radius * Math.sin(rotz) + velocity.y * time * Math.cos(rotz);
+        double levyX = position.x - radius * Math.cos(rotz) - velocity.left * time * Math.sin(rotz);
+        double levyY = position.y - radius * Math.sin(rotz) + velocity.left * time * Math.cos(rotz);
+        double pravyX = position.x + radius * Math.cos(rotz) - velocity.right * time * Math.sin(rotz);
+        double pravyY = position.y + radius * Math.sin(rotz) + velocity.right * time * Math.cos(rotz);
         Log.d("simulatePose", "traveled distance " + Math.sqrt(Math.pow(position.x - (levyX + pravyX) / 2, 2) + Math.pow(position.y - (levyY + pravyY) / 2, 2)));
         return new Point3((levyX + pravyX) / 2, (levyY + pravyY) / 2, Math.atan2(pravyY - levyY, pravyX - levyX));
     }

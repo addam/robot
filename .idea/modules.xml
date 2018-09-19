@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/Robot.iml" filepath="$PROJECT_DIR$/Robot.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/openCVLibrary340/openCVLibrary340.iml" filepath="$PROJECT_DIR$/openCVLibrary340/openCVLibrary340.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/robot.iml" filepath="$PROJECT_DIR$/.idea/robot.iml" />
       <module fileurl="file://$PROJECT_DIR$/usb-serial-for-android/usb-serial-for-android.iml" filepath="$PROJECT_DIR$/usb-serial-for-android/usb-serial-for-android.iml" />
       <module fileurl="file://$PROJECT_DIR$/usb-serial-for-android/usbSerialForAndroid/usbSerialForAndroid.iml" filepath="$PROJECT_DIR$/usb-serial-for-android/usbSerialForAndroid/usbSerialForAndroid.iml" />
     </modules>

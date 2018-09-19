@@ -21,7 +21,7 @@ public class Game {
         startTime = System.nanoTime();
     }
 
-    protected static Point jizda(Point3 pose, double targetX, double targetY) {
+    protected static Command jizda(Point3 pose, double targetX, double targetY) {
         int speed = 30;
         float beta = (float) Math.atan2(targetY - pose.y, targetX - pose.x);
         float alfa = (float) (beta + pose.z);
@@ -43,10 +43,10 @@ public class Game {
                 levy = 0;
             }
         }
-        return new Point(levy, pravy);
+        return new Command(levy, pravy);
     }
 
-    public Point gameOff(Point3 position, Point3 rotation) {
+    public Command gameOff(Point3 position, Point3 rotation) {
         if (20 < position.y && position.y < 100 && position.x < 20) {
             return jizda(position, 0, 120);
         }
