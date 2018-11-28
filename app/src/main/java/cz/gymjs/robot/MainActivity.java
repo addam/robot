@@ -32,7 +32,6 @@ import org.opencv.imgproc.Imgproc;
 import java.io.IOException;
 import java.util.Locale;
 
-
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private String error;
     private Tracker tracker;
