@@ -13,6 +13,8 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.opencv.core.CvType.CV_8UC3;
+import static org.opencv.core.CvType.CV_8UC4;
 import static org.opencv.imgproc.Imgproc.CHAIN_APPROX_SIMPLE;
 import static org.opencv.imgproc.Imgproc.COLOR_RGB2GRAY;
 import static org.opencv.imgproc.Imgproc.MORPH_DILATE;
@@ -24,20 +26,21 @@ import static org.opencv.imgproc.Imgproc.getStructuringElement;
 public class Detekce {
     public List<Point> plechovky = new ArrayList<Point>();
     public List<Point> prekazka = new ArrayList<Point>();
+    public List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
 
     public void detect(Mat mrizka, Mat fotka) {
-        Mat vysledek = new Mat();
+        Mat vysledek = new Mat(fotka.size(), CV_8UC4);
         int l = 90;
         int r = 110;
         float a = 255 / (r - l);
         float b = l;
+        //Imgproc.cvtColor(fotka, fotka, Imgproc.COLOR_BGR2BGRA);
         Core.subtract(fotka, new Scalar(b, b, b), vysledek);
         Core.multiply(vysledek, new Scalar(a, a, a), vysledek);
         Mat kelner = getStructuringElement(MORPH_RECT, new Size(10, 10));
         Core.absdiff(mrizka, vysledek, vysledek);
         Imgproc.morphologyEx(vysledek, vysledek, MORPH_OPEN, kelner);
         Imgproc.morphologyEx(vysledek, vysledek, MORPH_DILATE, kelner);
-        List<MatOfPoint> contours = new ArrayList<>();
         Mat mat = new Mat();
         Imgproc.cvtColor(vysledek, vysledek, COLOR_RGB2GRAY);
         Imgproc.findContours(vysledek, contours, mat, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
@@ -63,5 +66,9 @@ public class Detekce {
                 prekazka.add(new Point(x, y));
             }
         }
+    }
+
+    public void misto (ArrayList plechovky, ArrayList prekazka){
+
     }
 }

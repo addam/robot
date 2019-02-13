@@ -50,9 +50,13 @@ class Simulator {
     void tunePose(Point3 _position, Point3 _rotation) {
         if (position != null && rotation != null) {
             Point3 prediction = simulatedPose();
-            Point3 diff = subtract(new Point3(position.x, position.y, rotation.z), prediction);
-            double maxDistance = 5;
+            Point3 diff = subtract(new Point3(_position.x, _position.y, _rotation.z), prediction);
+            double maxDistance = 10;
             double certanity = Math.exp(-poseNorm(diff) / maxDistance);
+            if (certanity < 0.15) {
+                certanity = 0.0;
+            }
+            System.out.println("certanity je:" + certanity);
             Log.d("tunePose", "certanity " + certanity);
             lerp(_position, new Point3(prediction.x, prediction.y, position.z), certanity);
             lerp(_rotation, new Point3(rotation.x, rotation.y, prediction.z), certanity);

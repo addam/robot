@@ -29,12 +29,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private boolean isPlaying;
     private MotorController motors;
     private Simulator simulator = new Simulator();
+    private Detekce detekce = new Detekce();
+
 
     @Override
     public void onBackPressed() {
         error = null;
         if (isPlaying) {
             isPlaying = false;
+            simulator.reset();
             if (motors != null) {
                 try {
                     motors.rotate(0, 0);
@@ -114,24 +117,27 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputData) {
         Mat frame = inputData.rgba();
+        Mat predictedFrame = tracker.warpedGrid();
         try {
             if (frame.cols() != tracker.size.width) {
                 Imgproc.resize(frame, frame, tracker.size);
             }
-            Mat predictedFrame = tracker.warpedGrid();
             if (isTracking) {
                 Pair<Point3, Point3> gridPose = tracker.pose(predictedFrame, frame);
                 Pair<Point3, Point3> robotPose = Tracker.reflectPose(gridPose.first, gridPose.second);
                 if (isPlaying) {
                     Log.d("onCameraFrame", "simulate...");
                     simulator.tunePose(gridPose.first, gridPose.second);
+                    predictedFrame = tracker.warpedGrid();
+                    detekce.detect(predictedFrame, frame);
                     Command velocity = game.gameOff(robotPose.first, robotPose.second);
                     if (motors != null) {
                         motors.rotate(velocity.left, velocity.right);
                     } else {
-                        Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %.1f right: %.1f", velocity.left, velocity.right), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
+                        Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %d right: %d", velocity.left, velocity.right), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
+                        Imgproc.drawContours(frame, detekce.contours,-1, new Scalar(255,0,0) );
                     }
-                    simulator.setVelocity(velocity);
+                    //simulator.setVelocity(velocity);
                     tracker.setPose(gridPose);
                     Imgproc.warpPerspective(tracker.grid.image, predictedFrame, tracker.homography, predictedFrame.size());
                     Core.addWeighted(predictedFrame, 0.3, frame, 0.7, 0, frame);
