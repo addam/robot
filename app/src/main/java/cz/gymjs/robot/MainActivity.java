@@ -130,6 +130,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     simulator.tunePose(gridPose.first, gridPose.second);
                     predictedFrame = tracker.warpedGrid();
                     detekce.detect(predictedFrame, frame);
+                    Mat test = detekce.test;
+                    Imgproc.resize(test, test, origSize);
                     Command velocity = game.gameOff(robotPose.first, robotPose.second);
                     if (motors != null) {
                         motors.rotate(velocity.left, velocity.right);
@@ -141,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     tracker.setPose(gridPose);
                     Imgproc.warpPerspective(tracker.grid.image, predictedFrame, tracker.homography, predictedFrame.size());
                     Core.addWeighted(predictedFrame, 0.3, frame, 0.7, 0, frame);
+                    return test;
                 }
                 Imgproc.putText(frame, String.format(Locale.ENGLISH, "x: %.2f y: %.2f rot: %.1f", gridPose.first.x, gridPose.first.y, gridPose.second.z * 180 / Math.PI), new Point(10, 10), 0, 0.4, new Scalar(0, 255, 255));
             } else {

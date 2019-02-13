@@ -27,16 +27,19 @@ public class Detekce {
     public List<Point> plechovky = new ArrayList<Point>();
     public List<Point> prekazka = new ArrayList<Point>();
     public List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+    public Mat test;
 
     public void detect(Mat mrizka, Mat fotka) {
         Mat vysledek = new Mat(fotka.size(), CV_8UC4);
         int l = 90;
         int r = 110;
-        float a = 255 / (r - l);
+        float a = 255.0f / (r - l);
         float b = l;
         //Imgproc.cvtColor(fotka, fotka, Imgproc.COLOR_BGR2BGRA);
         Core.subtract(fotka, new Scalar(b, b, b), vysledek);
-        Core.multiply(vysledek, new Scalar(a, a, a), vysledek);
+        test = fotka.clone();
+        Core.multiply(vysledek, new Scalar(1, 1 ,1), vysledek);
+        if (false) {
         Mat kelner = getStructuringElement(MORPH_RECT, new Size(10, 10));
         Core.absdiff(mrizka, vysledek, vysledek);
         Imgproc.morphologyEx(vysledek, vysledek, MORPH_OPEN, kelner);
@@ -65,7 +68,7 @@ public class Detekce {
             } else {
                 prekazka.add(new Point(x, y));
             }
-        }
+        }}
     }
 
     public void misto (ArrayList plechovky, ArrayList prekazka){
