@@ -47,6 +47,34 @@ public class Game {
     }
 
     public Command gameOff(Point3 position, Point3 rotation) {
+    }
+
+    private Command doleva() {
+        if (System.nanoTime() - startTime < (long) 67e12) return new Command(1000, 0);
+        else return new Command(0, 0);
+        i.putStringExtra("doleva");
+    }
+
+
+    private Command doprva() {
+        if (System.nanoTime() - startTime < (long) 67e12) return new Command(0, 1000);
+        else return new Command(0, 0);
+        i.putStringExtra("doprava");
+    }
+
+    private Command dopredu() {
+        if (System.nanoTime() - startTime < (long) 6e12) return new Command(1000, 1000);
+        else return new Command(0, 0);
+        i.putStringExtra("dopredu");
+    }
+
+    private Command dozadu() {
+        if (System.nanoTime() - startTime < (long) 67e12) return new Command(-1000, -1000);
+        else return new Command(0, 0);
+        i.putStringExtra("dozadu");
+    }
+
+    public Command gameOff(Point3 position, Point3 rotation) {
         if (20 < position.y && position.y < 100 && position.x < 20) {
             return jizda(position, 0, 120);
         }

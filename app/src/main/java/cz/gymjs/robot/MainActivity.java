@@ -2,6 +2,7 @@ package cz.gymjs.robot;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
@@ -11,14 +12,26 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Pair;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import org.opencv.android.*;
-import org.opencv.core.*;
+
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.JavaCameraView;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Point3;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.util.Locale;
+
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private String error;
@@ -104,6 +117,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         });
     }
 
+    public void onClick(View view) {
+        Intent i = new Intent(this, dopredu.command);
+        String userMessage = test.getText().toString();
+        i.putExtra("dopredu", userMessage);
+        startActivity(i);
+
+    }
     @Override
     public void onCameraViewStarted(int width, int height) {
         origSize = new Size(width, height);
@@ -134,10 +154,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     Imgproc.resize(test, test, origSize);
                     Command velocity = game.gameOff(robotPose.first, robotPose.second);
                     if (motors != null) {
+                        Log.d("onCameraFrame", "simulate..." + velocity.left + velocity.right);
                         motors.rotate(velocity.left, velocity.right);
                     } else {
                         Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %d right: %d", velocity.left, velocity.right), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
                         Imgproc.drawContours(frame, detekce.contours,-1, new Scalar(255,0,0) );
+                        Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %.1d right: %.1d", velocity.left, velocity.right), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
                     }
                     //simulator.setVelocity(velocity);
                     tracker.setPose(gridPose);
