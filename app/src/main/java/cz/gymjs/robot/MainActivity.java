@@ -139,12 +139,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 Pair<Point3, Point3> gridPose = tracker.pose(predictedFrame, frame);
                 Pair<Point3, Point3> robotPose = Tracker.reflectPose(gridPose.first, gridPose.second);
                 if (isPlaying) {
-                    Log.d("onCameraFrame", "simulate...");
                     simulator.tunePose(gridPose.first, gridPose.second);
                     predictedFrame = tracker.warpedGrid();
                     detekce.detect(predictedFrame, frame);
                     Mat test = detekce.test;
                     Imgproc.resize(test, test, origSize);
+                    Log.d("onCameraFrame", "simulate...");
                     Command velocity = game.gameOff(robotPose.first, robotPose.second);
                     if (motors != null) {
                         Log.d("onCameraFrame", "simulate..." + velocity.left + velocity.right);

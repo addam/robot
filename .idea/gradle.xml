@@ -9,7 +9,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/openCVLibrary340" />
+            <option value="$PROJECT_DIR$/openCVLibrary345" />
             <option value="$PROJECT_DIR$/usb-serial-for-android" />
             <option value="$PROJECT_DIR$/usb-serial-for-android/usbSerialForAndroid" />
           </set>

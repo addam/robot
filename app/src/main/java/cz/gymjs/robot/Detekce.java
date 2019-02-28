@@ -1,27 +1,14 @@
 package cz.gymjs.robot;
 
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
+import android.util.Log;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.opencv.core.CvType.CV_8UC3;
 import static org.opencv.core.CvType.CV_8UC4;
-import static org.opencv.imgproc.Imgproc.CHAIN_APPROX_SIMPLE;
-import static org.opencv.imgproc.Imgproc.COLOR_RGB2GRAY;
-import static org.opencv.imgproc.Imgproc.MORPH_DILATE;
-import static org.opencv.imgproc.Imgproc.MORPH_OPEN;
-import static org.opencv.imgproc.Imgproc.MORPH_RECT;
-import static org.opencv.imgproc.Imgproc.RETR_EXTERNAL;
-import static org.opencv.imgproc.Imgproc.getStructuringElement;
+import static org.opencv.imgproc.Imgproc.*;
 
 public class Detekce {
     public List<Point> plechovky = new ArrayList<Point>();
@@ -37,15 +24,16 @@ public class Detekce {
         float b = l;
         //Imgproc.cvtColor(fotka, fotka, Imgproc.COLOR_BGR2BGRA);
         Core.subtract(fotka, new Scalar(b, b, b), vysledek);
-        test = fotka.clone();
-        Core.multiply(vysledek, new Scalar(1, 1 ,1), vysledek);
-        if (false) {
+        Core.multiply(vysledek, new Scalar(a, a, a), vysledek);
+        test = vysledek.clone();
+        Log.d("onCameraFrame", "test cloned");
         Mat kelner = getStructuringElement(MORPH_RECT, new Size(10, 10));
         Core.absdiff(mrizka, vysledek, vysledek);
         Imgproc.morphologyEx(vysledek, vysledek, MORPH_OPEN, kelner);
         Imgproc.morphologyEx(vysledek, vysledek, MORPH_DILATE, kelner);
         Mat mat = new Mat();
         Imgproc.cvtColor(vysledek, vysledek, COLOR_RGB2GRAY);
+        contours.clear();
         Imgproc.findContours(vysledek, contours, mat, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
         MatOfPoint2f approxCurve = new MatOfPoint2f();
         for (int i = 0; i < contours.size(); i++) {
@@ -68,7 +56,7 @@ public class Detekce {
             } else {
                 prekazka.add(new Point(x, y));
             }
-        }}
+        }
     }
 
     public void misto (ArrayList plechovky, ArrayList prekazka){
