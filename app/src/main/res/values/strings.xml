@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Robot Control</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_test_acvtivity">TestAcvtivity</string>
+    <string name="title_activity_test_activity">TestAcvtivity</string>
 </resources>

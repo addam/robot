@@ -46,32 +46,34 @@ public class Game {
         return new Command(levy, pravy);
     }
 
-    public Command gameOff(Point3 position, Point3 rotation) {
-    }
-
     private Command doleva() {
         if (System.nanoTime() - startTime < (long) 67e12) return new Command(1000, 0);
         else return new Command(0, 0);
-        i.putStringExtra("doleva");
+        // @vojta TODO putStringExtra should be called from within the main menu
+        // here, we should getStringExtra instead
+        //i.putStringExtra("doleva");
     }
 
 
     private Command doprva() {
         if (System.nanoTime() - startTime < (long) 67e12) return new Command(0, 1000);
         else return new Command(0, 0);
-        i.putStringExtra("doprava");
+// @vojta TODO used to be
+//        i.putStringExtra("doprava");
     }
 
     private Command dopredu() {
         if (System.nanoTime() - startTime < (long) 6e12) return new Command(1000, 1000);
         else return new Command(0, 0);
-        i.putStringExtra("dopredu");
+// @vojta TODO used to be
+//        i.putStringExtra("dopredu");
     }
 
     private Command dozadu() {
         if (System.nanoTime() - startTime < (long) 67e12) return new Command(-1000, -1000);
         else return new Command(0, 0);
-        i.putStringExtra("dozadu");
+// @vojta TODO used to be
+//        i.putStringExtra("dozadu");
     }
 
     public Command gameOff(Point3 position, Point3 rotation) {

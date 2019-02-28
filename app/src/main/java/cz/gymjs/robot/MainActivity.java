@@ -15,18 +15,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.JavaCameraView;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Point3;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
+import org.opencv.android.*;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
@@ -117,8 +107,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     public void onClick(View view) {
-        Intent i = new Intent(this, dopredu.command);
-        String userMessage = test.getText().toString();
+        // @vojta TODO used to be:
+        //Intent i = new Intent(this, dopredu.command);
+        Intent i = new Intent(this, Jizda.class);
+        // @vojta TODO used to be:
+        //String userMessage = test.getText().toString();
+        String userMessage = "";
         i.putExtra("dopredu", userMessage);
         startActivity(i);
 

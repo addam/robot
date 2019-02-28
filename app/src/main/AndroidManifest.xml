@@ -29,8 +29,8 @@
                 android:resource="@xml/device_filter" />
         </activity>
         <activity
-            android:name=".TestAcvtivity"
-            android:label="@string/title_activity_test_acvtivity"></activity>
+                android:name=".TestActivity"
+                android:label="@string/title_activity_test_activity"></activity>
     </application>
 
 </manifest>
