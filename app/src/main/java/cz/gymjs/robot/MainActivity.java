@@ -15,8 +15,18 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import org.opencv.android.*;
-import org.opencv.core.*;
+
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.JavaCameraView;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Point3;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
@@ -33,7 +43,32 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private Simulator simulator = new Simulator();
     private Detekce detekce = new Detekce();
 
+    /* private Command doleva() {
+           if (System.nanoTime() - startTime < (long) 67e12) return new Command(1000, 0);
+           else return new Command(0, 0);
 
+           i.putStringExtra("doleva", 1);
+       }
+
+
+       private Command doprva() {
+           if (System.nanoTime() - startTime < (long) 67e12) return new Command(0, 1000);
+           else return new Command(0, 0);
+           i.putStringExtra("doprava", 2);
+       }
+
+       private Command dopredu() {
+           if (System.nanoTime() - startTime < (long) 6e12) return new Command(1000, 1000);
+           else return new Command(0, 0);
+           i.putStringExtra("dopredu", 3);
+       }
+
+       private Command dozadu() {
+           if (System.nanoTime() - startTime < (long) 67e12) return new Command(-1000, -1000);
+           else return new Command(0, 0);
+           i.putStringExtra("dozadu", 4);
+       }
+       */
     @Override
     public void onBackPressed() {
         error = null;
@@ -67,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
         final JavaCameraView view = new JavaCameraView(this.getApplicationContext(), 0);
         view.setLayoutParams(new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT));
-        setContentView(view);
+        setContentView(R.layout.volba);
         view.setVisibility(SurfaceView.VISIBLE);
         view.setCvCameraViewListener(this);
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, new BaseLoaderCallback(this) {
