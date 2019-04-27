@@ -16,9 +16,17 @@ public class Game {
     int collectedCans;
     int state;
     private int faze = 0;
+    public static final int GAMETYPE_FORWARD = 1;
+    public static final int GAMETYPE_BACKWARD = 2;
+    public static final int GAMETYPE_ROTATION = 3;
+    public static final int GAMETYPE_GAME = 4;
+    int gametype = 0;
 
-    Game() {
+
+    Game(int intent) {
         startTime = System.nanoTime();
+        gametype = intent;
+
     }
 
     protected static Command jizda(Point3 pose, double targetX, double targetY) {
@@ -46,6 +54,15 @@ public class Game {
         return new Command(levy, pravy);
     }
 
+    public Command ruler(Point3 position, Point3 rotation) throws InterruptedException {
+        if (gametype == GAMETYPE_FORWARD) return dopredu();
+        else if (gametype == GAMETYPE_BACKWARD) return dozadu();
+        else if (gametype == GAMETYPE_ROTATION) return doprava();
+        else return gameOff(position, rotation);
+
+    }
+
+
     private Command doleva() {
         if (System.nanoTime() - startTime < (long) 67e12) return new Command(1000, 0);
         else return new Command(0, 0);
@@ -55,7 +72,7 @@ public class Game {
     }
 
 
-    private Command doprva() {
+    private Command doprava() {
         if (System.nanoTime() - startTime < (long) 67e12) return new Command(0, 1000);
         else return new Command(0, 0);
 // @vojta TODO used to be
@@ -92,9 +109,8 @@ public class Game {
             return jizda(position, 0, 0);
         }
     }
-
     /*
-    public void gameOn() throws IOException, InterruptedException {
+    public Command gameOn() throws IOException, InterruptedException {
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
         double distance1 = Math.sqrt(Math.pow(robot.x - enemy.x, 2) + (Math.pow(robot.y - enemy.y, 2)));
@@ -117,7 +133,7 @@ public class Game {
         if (isLoaded) {
             int i2 = 0;
             if (robot.y < 50) {
-                jizda(new Point((collectedCans + i2) * 6, 40));
+                return jizda(new Point((collectedCans + i2) * 6, 40));
             } else {
                 motors.rotate(100, 100);
                 Thread.sleep(2500);
@@ -147,11 +163,11 @@ public class Game {
                 }
             }
         }
+        return null;
     }
 
     private int vyberPlechovku(List<Point> plechovky) {
         return 0;
-    }
-    */
+    }*/
 }
 

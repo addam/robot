@@ -2,6 +2,7 @@ package cz.gymjs.robot;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
@@ -113,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 }
             }
         });
-
+        Intent intent = getIntent();
         view.setOnClickListener(view1 -> {
             error = null;
             try {
@@ -126,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                         }
                     } else {
                         UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-                        game = new Game();
+                        game = new Game(intent.getIntExtra("name", 0));
                         isPlaying = true;
                         motors = new MotorController(manager);
                     }
@@ -168,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     Mat test = detekce.test;
                     Imgproc.resize(test, test, origSize);
                     Log.d("onCameraFrame", "simulate...");
-                    Command velocity = game.gameOff(robotPose.first, robotPose.second);
+                    Command velocity = game.ruler(robotPose.first, robotPose.second);
                     if (motors != null) {
                         Log.d("onCameraFrame", "simulate..." + velocity.left + velocity.right);
                         motors.rotate(velocity.left, velocity.right);
