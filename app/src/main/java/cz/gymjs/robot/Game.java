@@ -55,10 +55,11 @@ public class Game {
     }
 
     public Command ruler(Point3 position, Point3 rotation) throws InterruptedException {
+        Point3 pose = new Point3(position.x, position.y, rotation.z);
         if (gametype == GAMETYPE_FORWARD) return dopredu();
         else if (gametype == GAMETYPE_BACKWARD) return dozadu();
         else if (gametype == GAMETYPE_ROTATION) return doprava();
-        else return gameOff(position, rotation);
+        else return gameOff(pose);
 
     }
 
@@ -93,46 +94,46 @@ public class Game {
 //        i.putStringExtra("dozadu");
     }
 
-    public Command gameOff(Point3 position, Point3 rotation) {
-        if (20 < position.y && position.y < 100 && position.x < 20) {
-            return jizda(position, 0, 120);
+    public Command gameOff(Point3 pose) {
+        if (20 < pose.y && pose.y < 100 && pose.x < 20) {
+            return jizda(pose, 0, 120);
         }
-        if (100 < position.y && position.x < 100 && 0 < position.x) {
-            return jizda(position, 120, 120);
+        if (100 < pose.y && pose.x < 100 && 0 < pose.x) {
+            return jizda(pose, 120, 120);
         }
-        if (20 < position.y && position.y < 100 && 100 < position.x) {
-            return jizda(position, 120, 0);
+        if (20 < pose.y && pose.y < 100 && 100 < pose.x) {
+            return jizda(pose, 120, 0);
         }
-        if (position.y < 20 && position.x < 100 && 20 < position.x) {
-            return jizda(position, 0, 0);
+        if (pose.y < 20 && pose.x < 100 && 20 < pose.x) {
+            return jizda(pose, 0, 0);
         } else {
-            return jizda(position, 0, 0);
+            return jizda(pose, 0, 0);
         }
     }
-    /*
-    public Command gameOn() throws IOException, InterruptedException {
+
+    public Command gameOn(Point3 pose) {
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
-        double distance1 = Math.sqrt(Math.pow(robot.x - enemy.x, 2) + (Math.pow(robot.y - enemy.y, 2)));
+        double distance1 = Math.sqrt(Math.pow(pose.x - enemy.x, 2) + (Math.pow(pose.y - enemy.y, 2)));
         if (plechovky.isEmpty()) ;
         {
-            motors.rotate(-150, -150);
-            Thread.sleep(2500);
-            if (distance1 < 10) {
-                motors.rotate(-200, -200);
-                Thread.sleep(2500);
-            }
+            return new Command(0, 1000);
         }
-        if (totalTime > 1500000000) {
-            if (100 < robot.y && robot.y < 140) {
-                jizda(new Point(120, 120));
+
+        if (totalTime > 1500000000)
+
+        {
+            if (100 < pose.y && pose.y < 140) {
+                return jizda(pose, 120, 120);
             } else {
-                jizda(new Point(0, 120));
+                return jizda(pose, 0, 120);
             }
         }
-        if (isLoaded) {
+        if (isLoaded)
+
+        {
             int i2 = 0;
-            if (robot.y < 50) {
+            if (pose.y < 50) {
                 return jizda(new Point((collectedCans + i2) * 6, 40));
             } else {
                 motors.rotate(100, 100);
@@ -151,13 +152,11 @@ public class Game {
                         state = 2;
                     } else if (state == 2) {
                         motors.rotate(100, 100);
-                        Thread.sleep(2500);
                         if (distance < 5) {
                             motors.rotate(100, 100);
                             i2 += 1;
                         } else {
                             motors.rotate(-200, 200);
-                            Thread.sleep(500);
                         }
                     }
                 }
@@ -168,6 +167,5 @@ public class Game {
 
     private int vyberPlechovku(List<Point> plechovky) {
         return 0;
-    }*/
+    }
 }
-
