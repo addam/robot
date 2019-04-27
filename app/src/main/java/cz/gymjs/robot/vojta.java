@@ -5,11 +5,23 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
-public class volba extends Activity {
+public class vojta extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_vojta);
+    }
+
+    public void jes(View view) {
+        System.out.println("jes");
+    }
+
     public void jizdadopredu(View view) {
         Intent i = new Intent(this, MainActivity.class);
         i.putExtra("name", 1);
         startActivity(i);
+
     }
 
     public void jizdadozadu(View view) {
@@ -17,19 +29,4 @@ public class volba extends Activity {
         i.putExtra("name", 2);
         startActivity(i);
     }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.volba);
-    }
 }
-     /*
-if(i==1)return dopredu()
-        Else if(i==2)return dozadu()
-
-
-        void setobtiznist() {
-        Intent callingIntent = getIntent();
-        obtiznost = callingIntent.getIntExtra("name", -1);
-        */

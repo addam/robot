@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         }
         final JavaCameraView view = new JavaCameraView(this.getApplicationContext(), 0);
         view.setLayoutParams(new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT));
-        setContentView(R.layout.volba);
+        setContentView(view);
         view.setVisibility(SurfaceView.VISIBLE);
         view.setCvCameraViewListener(this);
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, new BaseLoaderCallback(this) {
