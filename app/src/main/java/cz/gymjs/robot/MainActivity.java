@@ -2,7 +2,6 @@ package cz.gymjs.robot;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbManager;
@@ -12,7 +11,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Pair;
 import android.view.SurfaceView;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -141,17 +139,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         });
     }
 
-    public void onClick(View view) {
-        // @vojta TODO used to be:
-        //Intent i = new Intent(this, dopredu.command);
-        Intent i = new Intent(this, Jizda.class);
-        // @vojta TODO used to be:
-        //String userMessage = test.getText().toString();
-        String userMessage = "";
-        i.putExtra("dopredu", userMessage);
-        startActivity(i);
 
-    }
     @Override
     public void onCameraViewStarted(int width, int height) {
         origSize = new Size(width, height);
@@ -186,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                         motors.rotate(velocity.left, velocity.right);
                     } else {
                         Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %d right: %d", velocity.left, velocity.right), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
-                        Imgproc.drawContours(frame, detekce.contours,-1, new Scalar(255,0,0) );
+                        Imgproc.drawContours(frame, detekce.contours, -1, new Scalar(255, 0, 0));
                         Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %.1d right: %.1d", velocity.left, velocity.right), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
                     }
                     //simulator.setVelocity(velocity);
