@@ -1,14 +1,17 @@
 package cz.gymjs.robot;
 
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.opencv.core.CvType.CV_8UC4;
 import static org.opencv.imgproc.Imgproc.*;
+import static org.opencv.utils.Converters.vector_Point2f_to_Mat;
 
 public class Detekce {
     public List<Point> plechovky = new ArrayList<Point>();
@@ -17,6 +20,8 @@ public class Detekce {
     public Mat test;
 
     public void detect(Mat mrizka, Mat fotka) {
+        plechovky.clear();
+        prekazka.clear();
         Mat vysledek = new Mat(fotka.size(), CV_8UC4);
         int l = 90;
         int r = 110;
@@ -46,9 +51,9 @@ public class Detekce {
             double x = bounds.x + bounds.width / 2;
             double y = bounds.y + bounds.height * 0.8;
             if (pointCount >= 4) {
-                float ar = bounds.width / (float) bounds.height;
-                if (ar >= 0.50 & ar <= 0.80) {
-                    System.out.println("plechovka");
+                float ar = bounds.height / (float) bounds.width;
+                if (ar >= 0.50 && ar <= 0.80 && bounds.width <= 300) {
+                    Imgproc.rectangle(test, bounds.tl(), bounds.br(), new Scalar( 255, 0, 255));
                     plechovky.add(new Point(x, y));
                 } else {
                     prekazka.add(new Point(x, y));
@@ -59,7 +64,21 @@ public class Detekce {
         }
     }
 
-    public void misto (ArrayList plechovky, ArrayList prekazka){
+    public List<Point> misto (Mat homography){
+        if (plechovky.isEmpty()) {
+            return Collections.emptyList();
+        } else{
+        MatOfPoint2f p = new MatOfPoint2f(vector_Point2f_to_Mat(plechovky));
+        MatOfPoint2f vysledek = new MatOfPoint2f();
+        Core.perspectiveTransform(p, vysledek, homography.inv());
+        List<Point>vysledplech  = vysledek.toList();
+        for (int i = 0; i<plechovky.size(); i++){
+            System.out.println("plechovka je tady x: " + plechovky.get(i).x + " y: " + plechovky.get(i).y);
+            System.out.println("Souradnice plechovky x: " + vysledplech.get(i).x/40 + " y: " + vysledplech.get(i).y/40);
+        }
+        return vysledplech;
+        }
+
 
     }
 }

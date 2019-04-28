@@ -56,7 +56,7 @@ class Simulator {
             if (certanity < 0.15) {
                 certanity = 0.0;
             }
-            System.out.println("certanity je:" + certanity);
+            //System.out.println("certanity je:" + certanity);
             Log.d("tunePose", "certanity " + certanity);
             lerp(_position, new Point3(prediction.x, prediction.y, position.z), certanity);
             lerp(_rotation, new Point3(rotation.x, rotation.y, prediction.z), certanity);
