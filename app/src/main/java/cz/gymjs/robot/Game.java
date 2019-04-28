@@ -115,7 +115,7 @@ public class Game {
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
         double distance1 = Math.sqrt(Math.pow(pose.x - enemy.x, 2) + (Math.pow(pose.y - enemy.y, 2)));
-        if (plechovky.isEmpty()) ;
+        if (plechovky.isEmpty())
         {
             return new Command(0, 1000);
         }
