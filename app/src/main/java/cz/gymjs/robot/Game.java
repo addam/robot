@@ -123,10 +123,10 @@ public class Game {
         if (totalTime > 1500000000)
 
         {
-            if (100 < pose.y && pose.y < 140) {
-                return jizda(pose, 120, 120);
+            if (pose.y > 100 && pose.y < 140) {
+                return new Command(500, 500);
             } else {
-                return jizda(pose, 0, 120);
+                return new Command(0, 120);
             }
         }
         if (isLoaded)
@@ -134,29 +134,27 @@ public class Game {
         {
             int i2 = 0;
             if (pose.y < 50) {
-                return jizda(new Point((collectedCans + i2) * 6, 40));
+                return new Command((collectedCans + i2) * 6, 40);
             } else {
-                motors.rotate(100, 100);
-                Thread.sleep(2500);
-                while (robot.y > 0) {
-                    motors.rotate(-300, -300);
-                    Thread.sleep(500);
+                return new Command(100, 100);
+                while (pose.y > 0) {
+                    return new Command(-300, -300);
                 }
                 if (vyberPlechovku(plechovky) >= 0) {
                     Point pl = plechovky.get(vyberPlechovku(plechovky));
-                    double distance = Math.sqrt(Math.pow(robot.x - pl.x, 2) + (Math.pow(robot.y - pl.y, 2)));
+                    double distance = Math.sqrt(Math.pow(pose.x - pl.x, 2) + (Math.pow(pose.y - pl.y, 2)));
                     if (distance < 5) {
                         // TODO wtf?
                         if ((true)) isLoaded = true;
                         else isLoaded = false;
                         state = 2;
                     } else if (state == 2) {
-                        motors.rotate(100, 100);
+                        return new Command(100, 100);
                         if (distance < 5) {
-                            motors.rotate(100, 100);
+                            return new Command(100, 100);
                             i2 += 1;
                         } else {
-                            motors.rotate(-200, 200);
+                            return new Command(-200, 200);
                         }
                     }
                 }
