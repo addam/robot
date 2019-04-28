@@ -29,6 +29,8 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -166,6 +168,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     simulator.tunePose(gridPose.first, gridPose.second);
                     predictedFrame = tracker.warpedGrid();
                     detekce.detect(predictedFrame, frame);
+                    List<Point> wow = detekce.misto(tracker.homography);
                     Mat test = detekce.test;
                     Imgproc.resize(test, test, origSize);
                     Log.d("onCameraFrame", "simulate...");
@@ -175,6 +178,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                         motors.rotate(velocity.left, velocity.right);
                     } else {
                         Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %d right: %d", velocity.left, velocity.right), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
+
+                        Log.d("Plechovky", "plechovky jsou na techto mistech" + wow);
+
+
                         Imgproc.drawContours(frame, detekce.contours, -1, new Scalar(255, 0, 0));
                         Imgproc.putText(frame, String.format(Locale.ENGLISH, "left: %.1d right: %.1d", velocity.left, velocity.right), new Point(10, frame.rows()), 0, 0.4, new Scalar(0, 255, 255));
                     }
