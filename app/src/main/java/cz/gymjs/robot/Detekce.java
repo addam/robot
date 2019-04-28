@@ -47,7 +47,7 @@ public class Detekce {
             double y = bounds.y + bounds.height * 0.8;
             if (pointCount >= 4) {
                 float ar = bounds.width / (float) bounds.height;
-                if (ar >= 0.50 & ar <= 0.80) {
+                if (ar >= 0.50 && ar <= 0.80) {
                     System.out.println("plechovka");
                     plechovky.add(new Point(x, y));
                 } else {
