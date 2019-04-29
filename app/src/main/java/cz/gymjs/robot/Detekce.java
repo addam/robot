@@ -1,8 +1,15 @@
 package cz.gymjs.robot;
 
-import android.graphics.drawable.Drawable;
 import android.util.Log;
-import org.opencv.core.*;
+
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
@@ -10,7 +17,13 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.opencv.core.CvType.CV_8UC4;
-import static org.opencv.imgproc.Imgproc.*;
+import static org.opencv.imgproc.Imgproc.CHAIN_APPROX_SIMPLE;
+import static org.opencv.imgproc.Imgproc.COLOR_RGB2GRAY;
+import static org.opencv.imgproc.Imgproc.MORPH_DILATE;
+import static org.opencv.imgproc.Imgproc.MORPH_OPEN;
+import static org.opencv.imgproc.Imgproc.MORPH_RECT;
+import static org.opencv.imgproc.Imgproc.RETR_EXTERNAL;
+import static org.opencv.imgproc.Imgproc.getStructuringElement;
 import static org.opencv.utils.Converters.vector_Point2f_to_Mat;
 
 public class Detekce {
@@ -53,7 +66,7 @@ public class Detekce {
             if (pointCount >= 4) {
                 float ar = bounds.height / (float) bounds.width;
                 if (ar >= 0.50 && ar <= 0.80 && bounds.width <= 300) {
-                    Imgproc.rectangle(test, bounds.tl(), bounds.br(), new Scalar( 255, 0, 255));
+                    Imgproc.rectangle(test, bounds.tl(), bounds.br(), new Scalar(255, 0, 255));
                     plechovky.add(new Point(x, y));
                 } else {
                     prekazka.add(new Point(x, y));
@@ -64,19 +77,19 @@ public class Detekce {
         }
     }
 
-    public List<Point> misto (Mat homography){
+    public List<Point> misto(Mat homography) {
         if (plechovky.isEmpty()) {
             return Collections.emptyList();
-        } else{
-        MatOfPoint2f p = new MatOfPoint2f(vector_Point2f_to_Mat(plechovky));
-        MatOfPoint2f vysledek = new MatOfPoint2f();
-        Core.perspectiveTransform(p, vysledek, homography.inv());
-        List<Point>vysledplech  = vysledek.toList();
-        for (int i = 0; i<plechovky.size(); i++){
-            System.out.println("plechovka je tady x: " + plechovky.get(i).x + " y: " + plechovky.get(i).y);
-            System.out.println("Souradnice plechovky x: " + vysledplech.get(i).x/40 + " y: " + vysledplech.get(i).y/40);
-        }
-        return vysledplech;
+        } else {
+            MatOfPoint2f p = new MatOfPoint2f(vector_Point2f_to_Mat(plechovky));
+            MatOfPoint2f vysledek = new MatOfPoint2f();
+            Core.perspectiveTransform(p, vysledek, homography.inv());
+            List<Point> vysledplech = vysledek.toList();
+            for (int i = 0; i < plechovky.size(); i++) {
+                System.out.println("plechovka je tady x: " + plechovky.get(i).x + " y: " + plechovky.get(i).y);
+                System.out.println("Souradnice plechovky x: " + vysledplech.get(i).x / 40 + " y: " + vysledplech.get(i).y / 40);
+            }
+            return vysledplech;
         }
 
 

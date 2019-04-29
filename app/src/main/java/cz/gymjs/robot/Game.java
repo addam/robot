@@ -16,6 +16,7 @@ public class Game {
     int collectedCans;
     int state;
     private int faze = 0;
+    int i2 = 0;
     public static final int GAMETYPE_FORWARD = 1;
     public static final int GAMETYPE_BACKWARD = 2;
     public static final int GAMETYPE_ROTATION = 3;
@@ -115,8 +116,7 @@ public class Game {
         long endTime = System.nanoTime();
         long totalTime = endTime - startTime;
         double distance1 = Math.sqrt(Math.pow(pose.x - enemy.x, 2) + (Math.pow(pose.y - enemy.y, 2)));
-        if (plechovky.isEmpty())
-        {
+        if (plechovky.isEmpty()) {
             return new Command(0, 1000);
         }
 
@@ -130,38 +130,33 @@ public class Game {
             }
         }
         if (isLoaded)
-
         {
-            int i2 = 0;
             if (pose.y < 50) {
                 return new Command((collectedCans + i2) * 6, 40);
             } else {
                 return new Command(100, 100);
-                while (pose.y > 0) {
-                    return new Command(-300, -300);
-                }
-                if (vyberPlechovku(plechovky) >= 0) {
-                    Point pl = plechovky.get(vyberPlechovku(plechovky));
-                    double distance = Math.sqrt(Math.pow(pose.x - pl.x, 2) + (Math.pow(pose.y - pl.y, 2)));
-                    if (distance < 5) {
-                        // TODO wtf?
-                        if ((true)) isLoaded = true;
-                        else isLoaded = false;
-                        state = 2;
-                    } else if (state == 2) {
-                        return new Command(100, 100);
-                        if (distance < 5) {
-                            return new Command(100, 100);
-                            i2 += 1;
-                        } else {
-                            return new Command(-200, 200);
-                        }
-                    }
+            }
+        }
+        if (vyberPlechovku(plechovky) >= 0) {
+            Point pl = plechovky.get(vyberPlechovku(plechovky));
+            double distance = Math.sqrt(Math.pow(pose.x - pl.x, 2) + (Math.pow(pose.y - pl.y, 2)));
+            if (distance < 5) {
+                // TODO wtf?
+                if ((true)) isLoaded = true;
+                else isLoaded = false;
+                state = 2;
+            } else if (state == 2) {
+                if (distance < 5) {
+                    i2 += 1;
+                    return new Command(100, 100);
+                } else {
+                    return new Command(-200, 200);
                 }
             }
         }
         return null;
     }
+
 
     private int vyberPlechovku(List<Point> plechovky) {
         return 0;

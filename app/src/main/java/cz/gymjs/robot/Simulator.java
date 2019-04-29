@@ -1,7 +1,7 @@
 package cz.gymjs.robot;
 
 import android.util.Log;
-import org.opencv.core.Point;
+
 import org.opencv.core.Point3;
 
 class Simulator {
